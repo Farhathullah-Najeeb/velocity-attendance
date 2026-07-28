@@ -121,6 +121,31 @@ const LeaveManagement: React.FC = () => {
     }
   };
 
+  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
+
+  const handleCancelLeave = async (id: string) => {
+    if (!window.confirm('Are you sure you want to cancel this leave application?')) return;
+    
+    setCancelLoading(id);
+    setMessage(null);
+    try {
+      const res = await api.patch(`/leaves/${id}/cancel`);
+      setMessage({ 
+        text: res.data.message || 'Leave request successfully withdrawn.', 
+        type: 'success' 
+      });
+      fetchData();
+    } catch (err: any) {
+      console.error('Cancel leave error:', err);
+      setMessage({
+        text: err.response?.data?.message || 'Failed to withdraw leave request.',
+        type: 'error'
+      });
+    } finally {
+      setCancelLoading(null);
+    }
+  };
+
   // Format date helper
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -300,6 +325,7 @@ const LeaveManagement: React.FC = () => {
                       <th>Reason</th>
                       <th>Status</th>
                       <th>Remarks</th>
+                      <th className="center-cell">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -328,6 +354,20 @@ const LeaveManagement: React.FC = () => {
                           <td className="remarks-cell">
                             {leave.remarks ? (
                               <span className="remark-text">"{leave.remarks}"</span>
+                            ) : (
+                              <span className="text-muted italic">—</span>
+                            )}
+                          </td>
+                          <td className="center-cell">
+                            {leave.status === 'PENDING' ? (
+                              <button 
+                                type="button"
+                                className="btn-cancel-leave"
+                                onClick={() => handleCancelLeave(leave._id)}
+                                disabled={cancelLoading === leave._id}
+                              >
+                                {cancelLoading === leave._id ? 'Cancelling...' : 'Cancel'}
+                              </button>
                             ) : (
                               <span className="text-muted italic">—</span>
                             )}
@@ -378,6 +418,18 @@ const LeaveManagement: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {leave.status === 'PENDING' && (
+                        <div className="card-row-actions">
+                          <button 
+                            type="button"
+                            className="btn btn-danger btn-cancel-mobile flex-1"
+                            onClick={() => handleCancelLeave(leave._id)}
+                            disabled={cancelLoading === leave._id}
+                          >
+                            {cancelLoading === leave._id ? 'Cancelling...' : 'Cancel Request'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

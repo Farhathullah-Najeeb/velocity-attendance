@@ -51,6 +51,18 @@ const AdminLeaveManagement: React.FC = () => {
     fetchLeaves();
   }, [statusFilter, typeFilter]);
 
+  // Body scroll lock when action modal is open
+  useEffect(() => {
+    if (selectedLeave) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => { document.body.classList.remove('modal-open'); };
+  }, [selectedLeave]);
+
+
+
   // Open modal handler
   const openActionModal = (leave: ILeave, action: 'approve' | 'reject') => {
     setSelectedLeave(leave);

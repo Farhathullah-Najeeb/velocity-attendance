@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Mail, Lock, ShieldAlert, CheckCircle, ArrowLeft, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ShieldAlert, CheckCircle, ArrowLeft, KeyRound, Eye, EyeOff, User } from 'lucide-react';
 import logoBlack from '../assets/logo_black.png';
 import './Login.css';
 
@@ -10,12 +10,13 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Mode: 'login' | 'forgot' | 'reset'
-  const [mode, setMode] = useState<'login' | 'forgot' | 'reset'>('login');
+  // Mode: 'login' | 'forgot' | 'reset' | 'setup'
+  const [mode, setMode] = useState<'login' | 'forgot' | 'reset' | 'setup'>('login');
   
   // Password Visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showSetupPassword, setShowSetupPassword] = useState(false);
   
   // Login Inputs
   const [email, setEmail] = useState('');
@@ -26,12 +27,18 @@ const Login: React.FC = () => {
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  // Setup Inputs
+  const [setupName, setSetupName] = useState('');
+  const [setupEmail, setSetupEmail] = useState('');
+  const [setupPassword, setSetupPassword] = useState('');
+  const [setupPasskey, setSetupPasskey] = useState('');
+
   // Status flags
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const switchMode = (newMode: 'login' | 'forgot' | 'reset') => {
+  const switchMode = (newMode: 'login' | 'forgot' | 'reset' | 'setup') => {
     setMode(newMode);
     setError(null);
     setSuccess(null);
@@ -125,6 +132,50 @@ const Login: React.FC = () => {
     }
   };
 
+  // Submit Super Admin Setup Handler
+  const handleSetupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupName || !setupEmail || !setupPassword || !setupPasskey) {
+      setError('Please fill in all setup fields.');
+      return;
+    }
+
+    if (setupPassword.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+    try {
+      const res = await api.post('/admin/setup-super-admin', {
+        name: setupName,
+        email: setupEmail,
+        password: setupPassword,
+        passkey: setupPasskey
+      });
+      setSuccess(res.data.message || 'Super Admin created successfully!');
+      
+      // Auto-populate credentials and log in or go to sign-in page
+      setTimeout(() => {
+        switchMode('login');
+        setEmail(setupEmail);
+        setPassword(setupPassword);
+        
+        // Reset setup inputs
+        setSetupName('');
+        setSetupEmail('');
+        setSetupPassword('');
+        setSetupPasskey('');
+      }, 3000);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Super Admin setup failed. Verify passkey and email details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-page-container">
@@ -137,6 +188,7 @@ const Login: React.FC = () => {
             {mode === 'login' && 'Sign in to access your dashboard'}
             {mode === 'forgot' && 'Reset your corporate login credentials'}
             {mode === 'reset' && 'Create your new system password'}
+            {mode === 'setup' && 'Setup first Root Administrator (Super Admin)'}
           </p>
         </div>
 
@@ -211,6 +263,17 @@ const Login: React.FC = () => {
             <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
+
+            <div className="login-setup-prompt">
+              <span>New database setup?</span>
+              <button 
+                type="button" 
+                className="setup-admin-link-btn"
+                onClick={() => switchMode('setup')}
+              >
+                Setup Super Admin
+              </button>
+            </div>
           </form>
         )}
 
@@ -291,6 +354,88 @@ const Login: React.FC = () => {
 
             <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
               {loading ? 'Resetting Password...' : 'Save New Password'}
+            </button>
+
+            <button type="button" className="nav-back-btn centered-nav-btn" onClick={() => switchMode('login')}>
+              <ArrowLeft size={16} />
+              <span>Back to Sign In</span>
+            </button>
+          </form>
+        )}
+
+        {/* 4. Super Admin Setup View */}
+        {mode === 'setup' && (
+          <form className="login-form" onSubmit={handleSetupSubmit}>
+            <div className="form-group">
+              <label className="form-label">Super Admin Full Name</label>
+              <div className="input-with-icon">
+                <User className="input-icon" size={18} />
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. Administrator" 
+                  value={setupName}
+                  onChange={(e) => setSetupName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Admin Email Address</label>
+              <div className="input-with-icon">
+                <Mail className="input-icon" size={18} />
+                <input 
+                  type="email" 
+                  className="form-input" 
+                  placeholder="admin@company.com" 
+                  value={setupEmail}
+                  onChange={(e) => setSetupEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <div className="input-with-icon">
+                <Lock className="input-icon" size={18} />
+                <input 
+                  type={showSetupPassword ? "text" : "password"} 
+                  className="form-input has-password-toggle" 
+                  placeholder="Min. 6 characters" 
+                  value={setupPassword}
+                  onChange={(e) => setSetupPassword(e.target.value)}
+                  required
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => setShowSetupPassword(!showSetupPassword)}
+                  aria-label={showSetupPassword ? "Hide password" : "Show password"}
+                >
+                  {showSetupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Secret Backend Passkey</label>
+              <div className="input-with-icon">
+                <KeyRound className="input-icon" size={18} />
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Enter system setup passkey" 
+                  value={setupPasskey}
+                  onChange={(e) => setSetupPasskey(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+              {loading ? 'Configuring System...' : 'Configure Super Admin'}
             </button>
 
             <button type="button" className="nav-back-btn centered-nav-btn" onClick={() => switchMode('login')}>

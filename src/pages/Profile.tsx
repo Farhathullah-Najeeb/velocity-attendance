@@ -10,7 +10,10 @@ import {
   Coffee, 
   AlertCircle,
   Copy,
-  Check
+  Check,
+  KeyRound,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import './Profile.css';
 
@@ -19,6 +22,12 @@ const Profile: React.FC = () => {
   const [settings, setSettings] = useState<ISettings | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  // Change Password form states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdMessage, setPwdMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const handleCopyEmail = () => {
     if (!user?.email) return;
@@ -37,6 +46,41 @@ const Profile: React.FC = () => {
       console.error('Error fetching settings:', err);
     } finally {
       setLoadingSettings(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      setPwdMessage({ text: 'Please fill in both fields.', type: 'error' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdMessage({ text: 'New password must be at least 6 characters long.', type: 'error' });
+      return;
+    }
+
+    setPwdLoading(true);
+    setPwdMessage(null);
+    try {
+      const res = await api.post('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      setPwdMessage({ 
+        text: res.data.message || 'Password changed successfully.', 
+        type: 'success' 
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err: any) {
+      console.error('Change password error:', err);
+      setPwdMessage({
+        text: err.response?.data?.message || 'Failed to change password. Please verify current password.',
+        type: 'error'
+      });
+    } finally {
+      setPwdLoading(false);
     }
   };
 
@@ -65,52 +109,100 @@ const Profile: React.FC = () => {
       </header>
 
       <div className="profile-grid">
-        {/* Profile Card */}
-        <section className="profile-info-card glass-card">
-          <div className="avatar-large-container">
-            <div className="avatar-large">
-              {user.name.charAt(0).toUpperCase()}
+        {/* Left Column Group */}
+        <div className="profile-left-col">
+          {/* Profile Card */}
+          <section className="profile-info-card glass-card">
+            <div className="avatar-large-container">
+              <div className="avatar-large">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <h3>{user.name}</h3>
+              <span className="profile-role-badge">{user.role}</span>
             </div>
-            <h3>{user.name}</h3>
-            <span className="profile-role-badge">{user.role}</span>
-          </div>
 
-          <div className="profile-details-list">
-            <div className="profile-detail-row">
-              <Mail size={18} className="detail-icon" />
-              <div className="detail-meta flex-grow-1">
-                <span className="detail-lbl">Email Address</span>
-                <div className="detail-val-copy-row">
-                  <strong className="detail-val">{user.email}</strong>
-                  <button 
-                    type="button" 
-                    className={`btn-copy-inline ${copied ? 'copied' : ''}`}
-                    onClick={handleCopyEmail}
-                    title="Copy email to clipboard"
-                  >
-                    {copied ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
-                  </button>
+            <div className="profile-details-list">
+              <div className="profile-detail-row">
+                <Mail size={18} className="detail-icon" />
+                <div className="detail-meta flex-grow-1">
+                  <span className="detail-lbl">Email Address</span>
+                  <div className="detail-val-copy-row">
+                    <strong className="detail-val">{user.email}</strong>
+                    <button 
+                      type="button" 
+                      className={`btn-copy-inline ${copied ? 'copied' : ''}`}
+                      onClick={handleCopyEmail}
+                      title="Copy email to clipboard"
+                    >
+                      {copied ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-detail-row">
+                <Briefcase size={18} className="detail-icon" />
+                <div className="detail-meta">
+                  <span className="detail-lbl">Department</span>
+                  <strong className="detail-val">{user.department || 'EMPLOYEE'}</strong>
+                </div>
+              </div>
+
+              <div className="profile-detail-row">
+                <Shield size={18} className="detail-icon" />
+                <div className="detail-meta">
+                  <span className="detail-lbl">System Authorization</span>
+                  <strong className="detail-val">{user.role === 'EMPLOYEE' ? 'Regular Employee' : 'Administrator'}</strong>
                 </div>
               </div>
             </div>
+          </section>
 
-            <div className="profile-detail-row">
-              <Briefcase size={18} className="detail-icon" />
-              <div className="detail-meta">
-                <span className="detail-lbl">Department</span>
-                <strong className="detail-val">{user.department || 'EMPLOYEE'}</strong>
-              </div>
+          {/* Change Password Card */}
+          <section className="change-password-card glass-card">
+            <div className="card-header-icon">
+              <KeyRound size={20} className="accent-color-icon" />
+              <h3>Change Password</h3>
             </div>
 
-            <div className="profile-detail-row">
-              <Shield size={18} className="detail-icon" />
-              <div className="detail-meta">
-                <span className="detail-lbl">System Authorization</span>
-                <strong className="detail-val">{user.role === 'EMPLOYEE' ? 'Regular Employee' : 'Administrator'}</strong>
+            <form onSubmit={handleChangePassword} className="change-password-form">
+              {pwdMessage && (
+                <div className={`pwd-alert alert-${pwdMessage.type === 'success' ? 'success' : 'danger'}`}>
+                  {pwdMessage.type === 'success' ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                  <span>{pwdMessage.text}</span>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">Current Password</label>
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
               </div>
-            </div>
-          </div>
-        </section>
+
+              <div className="form-group">
+                <label className="form-label">New Password</label>
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="New password (min. 6 chars)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full" disabled={pwdLoading}>
+                {pwdLoading ? 'Updating password...' : 'Update Password'}
+              </button>
+            </form>
+          </section>
+        </div>
 
         {/* Work Policies Settings card */}
         <section className="policy-settings-card glass-card">

@@ -387,3 +387,29 @@
   justify-content: center;
   width: 100%;
 }
+
+/* Database Setup Prompt */
+.login-setup-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.setup-admin-link-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent-primary);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.setup-admin-link-btn:hover {
+  color: var(--accent-primary-hover);
+  text-decoration: underline;
+}

@@ -41,6 +41,18 @@ const AttendanceExceptions: React.FC = () => {
     fetchExceptions();
   }, []);
 
+  // Body scroll lock when modal is open
+  useEffect(() => {
+    if (selectedException) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => { document.body.classList.remove('modal-open'); };
+  }, [selectedException]);
+
+
+
   const openActionModal = (record: IAttendance, action: 'approve' | 'reject') => {
     setSelectedException(record);
     setModalAction(action);

@@ -4,10 +4,11 @@ import type { ISettings, IHoliday } from '../types';
 import { 
   CheckCircle, 
   XCircle, 
-  Calendar,
   Clock, 
-  Save, 
-  CalendarPlus 
+  Calendar,
+  Save,
+  CalendarPlus,
+  Trash2
 } from 'lucide-react';
 import './HolidaysSettings.css';
 
@@ -106,6 +107,28 @@ const HolidaysSettings: React.FC = () => {
       setMessage({ text: err.response?.data?.message || 'Failed to register holiday.', type: 'error' });
     } finally {
       setAddHolidayLoading(false);
+    }
+  };
+
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+
+  const handleDeleteHoliday = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this company holiday?')) return;
+    
+    setDeleteLoading(id);
+    setMessage(null);
+    try {
+      await api.delete(`/holidays/${id}`);
+      setMessage({ text: 'Calendar holiday removed successfully.', type: 'success' });
+      fetchHolidays();
+    } catch (err: any) {
+      console.error('Delete holiday error:', err);
+      setMessage({ 
+        text: err.response?.data?.message || 'Failed to remove calendar holiday.', 
+        type: 'error' 
+      });
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -261,10 +284,19 @@ const HolidaysSettings: React.FC = () => {
                           {dateObj.getDate()}
                         </span>
                       </div>
-                      <div className="holiday-desc-text">
+                      <div className="holiday-desc-text flex-grow-1">
                         <h5>{holiday.name}</h5>
                         <p>{formatDate(holiday.date)}</p>
                       </div>
+                      <button 
+                        type="button" 
+                        className="btn-delete-holiday"
+                        title="Delete Holiday"
+                        onClick={() => handleDeleteHoliday(holiday._id)}
+                        disabled={deleteLoading === holiday._id}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   );
                 })}

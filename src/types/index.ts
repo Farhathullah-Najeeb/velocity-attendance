@@ -1,3 +1,12 @@
+export interface IRole {
+  _id: string;
+  name: string;
+  permissions: string[];
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface IUser {
   _id: string;
   name: string;
@@ -6,6 +15,8 @@ export interface IUser {
   department?: string;
   isActive?: boolean;
   isApproved?: boolean;
+  customRole?: IRole;
+  permissions?: string[];
   createdAt?: string;
   updatedAt?: string;
 }

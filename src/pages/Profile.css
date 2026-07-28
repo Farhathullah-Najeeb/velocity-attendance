@@ -260,3 +260,46 @@
   from { transform: scale(0.7); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+.profile-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.change-password-card {
+  padding: 2rem;
+}
+
+.change-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.pwd-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.pwd-alert.alert-success {
+  background: rgba(22, 163, 74, 0.08);
+  color: var(--color-success);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+}
+
+.pwd-alert.alert-danger {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--color-danger);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.w-full {
+  width: 100%;
+}

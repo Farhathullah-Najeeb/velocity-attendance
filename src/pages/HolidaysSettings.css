@@ -211,3 +211,33 @@
     padding: 0.75rem;
   }
 }
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+.btn-delete-holiday {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.btn-delete-holiday:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--color-danger);
+}
+
+.btn-delete-holiday:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

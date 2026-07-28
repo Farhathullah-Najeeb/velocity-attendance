@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import type { IUser } from '../types';
+import type { IUser, IRole } from '../types';
 import { 
   CheckCircle, 
   XCircle, 
@@ -13,7 +13,10 @@ import {
   Check, 
   X, 
   Edit2, 
-  Power
+  Power,
+  Trash2,
+  Plus,
+  Settings
 } from 'lucide-react';
 import './EmployeeManagement.css';
 
@@ -26,9 +29,25 @@ const EmployeeManagement: React.FC = () => {
   const [admins, setAdmins] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Tab control: 'approved' | 'pending' | 'admins'
-  const [activeTab, setActiveTab] = useState<'approved' | 'pending' | 'admins'>('approved');
+  // Tab control: 'approved' | 'pending' | 'admins' | 'roles'
+  const [activeTab, setActiveTab] = useState<'approved' | 'pending' | 'admins' | 'roles'>('approved');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Custom Roles & Permissions states
+  const [customRoles, setCustomRoles] = useState<IRole[]>([]);
+  const [systemPermissions, setSystemPermissions] = useState<string[]>([]);
+  
+  // Custom Role Creator/Editor form inputs
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<IRole | null>(null);
+  const [roleName, setRoleName] = useState('');
+  const [roleDesc, setRoleDesc] = useState('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+
+  // Assign user roles and permissions inputs
+  const [assignUser, setAssignUser] = useState<IUser | null>(null);
+  const [targetRoleId, setTargetRoleId] = useState('');
+  const [targetPermissions, setTargetPermissions] = useState<string[]>([]);
 
   // Modals status
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
@@ -65,6 +84,13 @@ const EmployeeManagement: React.FC = () => {
       if (activeTab === 'admins') {
         const res = await api.get<IUser[]>('/admin/list');
         setAdmins(res.data);
+      } else if (activeTab === 'roles') {
+        const [rolesRes, permRes] = await Promise.all([
+          api.get<IRole[]>('/roles'),
+          api.get<string[]>('/admin/permissions')
+        ]);
+        setCustomRoles(rolesRes.data);
+        setSystemPermissions(permRes.data);
       } else {
         const status = activeTab === 'pending' ? 'PENDING' : 'APPROVED';
         const res = await api.get<IUser[]>('/employees', {
@@ -80,9 +106,35 @@ const EmployeeManagement: React.FC = () => {
     }
   };
 
+  // Fetch custom roles list on load so they are available for assignment dropdowns
+  const fetchInitialRoles = async () => {
+    try {
+      const res = await api.get<IRole[]>('/roles');
+      setCustomRoles(res.data);
+    } catch (err) {
+      console.error('Error fetching initial roles:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchInitialRoles();
   }, [activeTab]);
+
+  // Body scroll lock: prevent page scrolling while any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = showAddEmployeeModal || showAddAdminModal || showRoleModal || assignUser !== null;
+    if (isAnyModalOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showAddEmployeeModal, showAddAdminModal, showRoleModal, assignUser]);
+
+
 
   // Create Employee submission handler
   const handleCreateEmployeeSubmit = async (e: React.FormEvent) => {
@@ -252,6 +304,147 @@ const EmployeeManagement: React.FC = () => {
     }
   };
 
+  // Open custom role modal for creating or editing
+  const openRoleModal = (role: IRole | null = null) => {
+    setSelectedRole(role);
+    if (role) {
+      setRoleName(role.name);
+      setRoleDesc(role.description || '');
+      setSelectedPermissions(role.permissions || []);
+    } else {
+      setRoleName('');
+      setRoleDesc('');
+      setSelectedPermissions([]);
+    }
+    setShowRoleModal(true);
+  };
+
+  // Handle Custom Role submit (Create or Edit)
+  const handleRoleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleName.trim()) return;
+
+    setModalSubmitting(true);
+    setMessage(null);
+    try {
+      if (selectedRole) {
+        // Edit Role
+        const res = await api.patch(`/roles/${selectedRole._id}`, {
+          name: roleName.trim(),
+          description: roleDesc.trim(),
+          permissions: selectedPermissions
+        });
+        setMessage({ text: res.data.message || 'Custom role updated successfully.', type: 'success' });
+      } else {
+        // Create Role
+        const res = await api.post('/roles', {
+          name: roleName.trim(),
+          description: roleDesc.trim(),
+          permissions: selectedPermissions
+        });
+        setMessage({ text: res.data.message || 'Custom role registered successfully.', type: 'success' });
+      }
+      setShowRoleModal(false);
+      setSelectedRole(null);
+      setRoleName('');
+      setRoleDesc('');
+      setSelectedPermissions([]);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Role submit error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to save custom role.', type: 'error' });
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // Handle delete custom role
+  const handleDeleteRole = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this custom role? This will clear role assignments for related users.')) {
+      return;
+    }
+    setMessage(null);
+    setActionLoadingId(id);
+    try {
+      const res = await api.delete(`/roles/${id}`);
+      setMessage({ text: res.data.message || 'Custom role removed successfully.', type: 'success' });
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Delete role error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to remove custom role.', type: 'error' });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Handle Employee role update assignment
+  const handleAssignEmployeeRoleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignUser) return;
+
+    setModalSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await api.patch(`/employees/${assignUser._id}/role`, {
+        roleId: targetRoleId || null
+      });
+      setMessage({ text: res.data.message || 'Employee role updated successfully.', type: 'success' });
+      setAssignUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Assign employee role error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to assign role to employee.', type: 'error' });
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // Handle Admin role & granular permissions update assignment
+  const handleAssignAdminCredentialsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignUser) return;
+
+    setModalSubmitting(true);
+    setMessage(null);
+    try {
+      // 1. Assign role
+      await api.patch(`/admin/${assignUser._id}/role`, {
+        roleId: targetRoleId || null
+      });
+
+      // 2. Assign granular permissions
+      const res = await api.patch(`/admin/${assignUser._id}/permissions`, {
+        permissions: targetPermissions
+      });
+
+      setMessage({ text: res.data.message || 'Admin role and system permissions updated.', type: 'success' });
+      setAssignUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Assign admin credentials error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to update administrator credentials.', type: 'error' });
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // Toggle checklist permission selection
+  const handleTogglePermissionSelection = (perm: string) => {
+    if (selectedPermissions.includes(perm)) {
+      setSelectedPermissions(selectedPermissions.filter(p => p !== perm));
+    } else {
+      setSelectedPermissions([...selectedPermissions, perm]);
+    }
+  };
+
+  const handleToggleTargetPermissionSelection = (perm: string) => {
+    if (targetPermissions.includes(perm)) {
+      setTargetPermissions(targetPermissions.filter(p => p !== perm));
+    } else {
+      setTargetPermissions([...targetPermissions, perm]);
+    }
+  };
+
   // Registration approvals handler
   const handleApprove = async (id: string) => {
     setMessage(null);
@@ -353,6 +546,17 @@ const EmployeeManagement: React.FC = () => {
             <UserPlus size={20} />
             <span>Create Admin</span>
           </button>
+        ) : activeTab === 'roles' ? (
+          <button 
+            className="btn btn-primary"
+            onClick={() => {
+              openRoleModal(null);
+              setMessage(null);
+            }}
+          >
+            <Plus size={20} />
+            <span>Create Role</span>
+          </button>
         ) : (
           <button 
             className="btn btn-primary"
@@ -415,16 +619,29 @@ const EmployeeManagement: React.FC = () => {
             </button>
 
             {isSuperAdmin && (
-              <button 
-                className={`tab-btn ${activeTab === 'admins' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('admins');
-                  setSearchQuery('');
-                }}
-              >
-                <ShieldCheck size={16} />
-                <span>Administrators</span>
-              </button>
+              <>
+                <button 
+                  className={`tab-btn ${activeTab === 'admins' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('admins');
+                    setSearchQuery('');
+                  }}
+                >
+                  <ShieldCheck size={16} />
+                  <span>Administrators</span>
+                </button>
+
+                <button 
+                  className={`tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('roles');
+                    setSearchQuery('');
+                  }}
+                >
+                  <Settings size={16} />
+                  <span>Custom Roles</span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -476,14 +693,30 @@ const EmployeeManagement: React.FC = () => {
                           {adm._id === user?._id || adm.role === 'SUPER_ADMIN' ? (
                             <span className="text-muted italic">—</span>
                           ) : (
-                            <button 
-                              className={`action-btn-circle toggle-status-btn ${adm.isActive !== false ? 'active-state' : 'inactive-state'}`} 
-                              title={adm.isActive !== false ? 'Deactivate Admin' : 'Activate Admin'}
-                              onClick={() => handleToggleAdminStatus(adm._id, adm.isActive !== false)}
-                              disabled={actionLoadingId === adm._id}
-                            >
-                              <Power size={16} />
-                            </button>
+                            <div className="btn-action-group">
+                              <button 
+                                type="button"
+                                className="action-btn-circle role-btn" 
+                                title="Manage custom role & permissions"
+                                onClick={() => {
+                                  setAssignUser(adm);
+                                  setTargetRoleId(adm.customRole?._id || '');
+                                  setTargetPermissions(adm.permissions || []);
+                                }}
+                              >
+                                <ShieldCheck size={16} />
+                              </button>
+
+                              <button 
+                                type="button"
+                                className={`action-btn-circle toggle-status-btn ${adm.isActive !== false ? 'active-state' : 'inactive-state'}`} 
+                                title={adm.isActive !== false ? 'Deactivate Admin' : 'Activate Admin'}
+                                onClick={() => handleToggleAdminStatus(adm._id, adm.isActive !== false)}
+                                disabled={actionLoadingId === adm._id}
+                              >
+                                <Power size={16} />
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -519,9 +752,23 @@ const EmployeeManagement: React.FC = () => {
                     </div>
                     
                     {adm._id !== user?._id && adm.role !== 'SUPER_ADMIN' && (
-                      <div className="card-row-actions">
+                      <div className="card-row-actions gap-05rem">
                         <button 
-                          className={`btn btn-secondary w-full toggle-status-btn-mobile ${adm.isActive !== false ? 'active-state' : 'inactive-state'}`}
+                          type="button"
+                          className="btn btn-secondary flex-1"
+                          onClick={() => {
+                            setAssignUser(adm);
+                            setTargetRoleId(adm.customRole?._id || '');
+                            setTargetPermissions(adm.permissions || []);
+                          }}
+                        >
+                          <ShieldCheck size={14} />
+                          <span>Credentials</span>
+                        </button>
+                        
+                        <button 
+                          type="button"
+                          className={`btn btn-secondary flex-1 toggle-status-btn-mobile ${adm.isActive !== false ? 'active-state' : 'inactive-state'}`}
                           onClick={() => handleToggleAdminStatus(adm._id, adm.isActive !== false)}
                           disabled={actionLoadingId === adm._id}
                         >
@@ -536,6 +783,57 @@ const EmployeeManagement: React.FC = () => {
             </div>
           ) : (
             <p className="text-muted padding-2rem text-center">No matching administrators found.</p>
+          )
+        ) : activeTab === 'roles' ? (
+          /* Custom Roles View */
+          customRoles.length > 0 ? (
+            <div className="custom-roles-tab-section">
+              <div className="roles-cards-grid">
+                {customRoles.map((role) => (
+                  <div className="role-card glass-card" key={role._id}>
+                    <div className="role-card-header">
+                      <h3>{role.name}</h3>
+                      <div className="btn-action-group">
+                        <button 
+                          type="button"
+                          className="action-btn-circle edit-btn" 
+                          title="Edit Custom Role"
+                          onClick={() => openRoleModal(role)}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button 
+                          type="button"
+                          className="action-btn-circle reject-btn" 
+                          title="Delete Custom Role"
+                          onClick={() => handleDeleteRole(role._id)}
+                          disabled={actionLoadingId === role._id}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="role-desc">{role.description || 'No description provided.'}</p>
+                    <div className="role-permissions-list">
+                      <h4>Permissions</h4>
+                      <div className="permissions-tags-row">
+                        {role.permissions && role.permissions.length > 0 ? (
+                          role.permissions.map((perm) => (
+                            <span key={perm} className="permission-tag-badge">
+                              {perm}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-muted italic text-xs">No permissions assigned.</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted padding-2rem text-center">No custom roles created yet.</p>
           )
         ) : (
           /* Employees View */
@@ -566,7 +864,14 @@ const EmployeeManagement: React.FC = () => {
                         </td>
                         <td>{emp.email}</td>
                         <td>
-                          <span className="dept-tag">{emp.department || '—'}</span>
+                          <div className="emp-dept-role-container">
+                            <span className="dept-tag">{emp.department || '—'}</span>
+                            {emp.customRole && (
+                              <span className="custom-role-badge">
+                                {emp.customRole.name}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           {activeTab === 'pending' ? (
@@ -581,6 +886,7 @@ const EmployeeManagement: React.FC = () => {
                           {activeTab === 'pending' ? (
                             <div className="btn-action-group">
                               <button 
+                                type="button"
                                 className="action-btn-circle approve-btn" 
                                 title="Approve employee"
                                 onClick={() => handleApprove(emp._id)}
@@ -589,6 +895,7 @@ const EmployeeManagement: React.FC = () => {
                                 <Check size={16} />
                               </button>
                               <button 
+                                type="button"
                                 className="action-btn-circle reject-btn" 
                                 title="Reject employee"
                                 onClick={() => handleReject(emp._id)}
@@ -600,14 +907,28 @@ const EmployeeManagement: React.FC = () => {
                           ) : (
                             <div className="btn-action-group">
                               <button 
+                                type="button"
                                 className="action-btn-circle edit-btn" 
                                 title="Edit Employee details"
                                 onClick={() => openEditModal(emp)}
                               >
                                 <Edit2 size={16} />
                               </button>
+
+                              <button 
+                                type="button"
+                                className="action-btn-circle role-btn" 
+                                title="Assign custom role"
+                                onClick={() => {
+                                  setAssignUser(emp);
+                                  setTargetRoleId(emp.customRole?._id || '');
+                                }}
+                              >
+                                <ShieldCheck size={16} />
+                              </button>
                               
                               <button 
+                                type="button"
                                 className={`action-btn-circle toggle-status-btn ${emp.isActive !== false ? 'active-state' : 'inactive-state'}`} 
                                 title={emp.isActive !== false ? 'Deactivate Account' : 'Activate Account'}
                                 onClick={() => handleToggleStatus(emp._id, emp.isActive !== false)}
@@ -635,7 +956,14 @@ const EmployeeManagement: React.FC = () => {
                         </div>
                         <div className="emp-details">
                           <strong>{emp.name}</strong>
-                          <span className="dept-tag margin-top-025rem">{emp.department || 'No Dept'}</span>
+                          <div className="emp-dept-role-container margin-top-025rem">
+                            <span className="dept-tag">{emp.department || 'No Dept'}</span>
+                            {emp.customRole && (
+                              <span className="custom-role-badge">
+                                {emp.customRole.name}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -659,6 +987,7 @@ const EmployeeManagement: React.FC = () => {
                       {activeTab === 'pending' ? (
                         <>
                           <button 
+                            type="button"
                             className="btn btn-success flex-1" 
                             onClick={() => handleApprove(emp._id)}
                             disabled={actionLoadingId === emp._id}
@@ -667,6 +996,7 @@ const EmployeeManagement: React.FC = () => {
                             <span>Approve</span>
                           </button>
                           <button 
+                            type="button"
                             className="btn btn-danger flex-1" 
                             onClick={() => handleReject(emp._id)}
                             disabled={actionLoadingId === emp._id}
@@ -678,14 +1008,28 @@ const EmployeeManagement: React.FC = () => {
                       ) : (
                         <>
                           <button 
+                            type="button"
                             className="btn btn-secondary flex-1" 
                             onClick={() => openEditModal(emp)}
                           >
                             <Edit2 size={14} />
                             <span>Edit</span>
                           </button>
+
+                          <button 
+                            type="button"
+                            className="btn btn-secondary flex-1" 
+                            onClick={() => {
+                              setAssignUser(emp);
+                              setTargetRoleId(emp.customRole?._id || '');
+                            }}
+                          >
+                            <ShieldCheck size={14} />
+                            <span>Role</span>
+                          </button>
                           
                           <button 
+                            type="button"
                             className={`btn btn-secondary flex-1 toggle-status-btn-mobile ${emp.isActive !== false ? 'active-state' : 'inactive-state'}`} 
                             onClick={() => handleToggleStatus(emp._id, emp.isActive !== false)}
                             disabled={actionLoadingId === emp._id}
@@ -922,6 +1266,188 @@ const EmployeeManagement: React.FC = () => {
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={modalSubmitting}>
                   {modalSubmitting ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 4: Custom Role Creator/Editor overlay */}
+      {showRoleModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box modal-box-lg glass-card fade-in">
+            <div className="modal-header">
+              <h3>{selectedRole ? 'Edit Custom Role' : 'Create Custom Role'}</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setShowRoleModal(false)}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleRoleSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Role Name (Identifier)</label>
+                  <input 
+                    type="text" 
+                    className="form-input"
+                    placeholder="e.g. HR_OFFICER"
+                    value={roleName}
+                    onChange={(e) => setRoleName(e.target.value.toUpperCase().replace(/\s+/g, '_'))}
+                    required
+                    disabled={!!selectedRole}
+                  />
+                  <span className="input-helper-text">Uppercase with underscores. Cannot be edited once created.</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Role Description</label>
+                  <textarea 
+                    className="form-input form-textarea"
+                    placeholder="e.g. Manage employee directories and leave schedules."
+                    value={roleDesc}
+                    onChange={(e) => setRoleDesc(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label font-bold">Select Role Permissions</label>
+                  {systemPermissions.length > 0 ? (
+                    <div className="permissions-checklist-grid">
+                      {systemPermissions.map((perm) => (
+                        <label key={perm} className="permission-checkbox-label">
+                          <input 
+                            type="checkbox"
+                            checked={selectedPermissions.includes(perm)}
+                            onChange={() => handleTogglePermissionSelection(perm)}
+                          />
+                          <span className="checkbox-custom" />
+                          <span className="permission-name-text">{perm.replace(/_/g, ' ')}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted italic">Loading system permissions...</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowRoleModal(false)} disabled={modalSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={modalSubmitting}>
+                  {modalSubmitting ? 'Saving Role...' : selectedRole ? 'Save Changes' : 'Create Role'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 5: Assign Employee Role overlay */}
+      {assignUser && assignUser.role === 'EMPLOYEE' && (
+        <div className="modal-backdrop">
+          <div className="modal-box glass-card fade-in">
+            <div className="modal-header">
+              <h3>Assign Custom Role to Employee</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setAssignUser(null)}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleAssignEmployeeRoleSubmit}>
+              <div className="modal-body">
+                <p className="modal-info-text">
+                  Assigning a custom role to <strong>{assignUser.name}</strong> will grant them permissions defined within that role.
+                </p>
+
+                <div className="form-group">
+                  <label className="form-label">Select Custom Role</label>
+                  <select 
+                    className="form-select"
+                    value={targetRoleId}
+                    onChange={(e) => setTargetRoleId(e.target.value)}
+                  >
+                    <option value="">No Role / Default Employee</option>
+                    {customRoles.map((role) => (
+                      <option key={role._id} value={role._id}>
+                        {role.name} ({role.description || 'No description'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setAssignUser(null)} disabled={modalSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={modalSubmitting}>
+                  {modalSubmitting ? 'Saving Role...' : 'Assign Role'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 6: Assign Admin Role & Permissions overlay */}
+      {assignUser && assignUser.role !== 'EMPLOYEE' && (
+        <div className="modal-backdrop">
+          <div className="modal-box modal-box-lg glass-card fade-in">
+            <div className="modal-header">
+              <h3>Manage Admin Role & Permissions</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setAssignUser(null)}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleAssignAdminCredentialsSubmit}>
+              <div className="modal-body">
+                <p className="modal-info-text">
+                  Configure role assignment and granular permissions for administrator account <strong>{assignUser.name}</strong>.
+                </p>
+
+                <div className="form-group">
+                  <label className="form-label">Select Custom Role</label>
+                  <select 
+                    className="form-select"
+                    value={targetRoleId}
+                    onChange={(e) => setTargetRoleId(e.target.value)}
+                  >
+                    <option value="">No Role / Default Admin</option>
+                    {customRoles.map((role) => (
+                      <option key={role._id} value={role._id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="input-helper-text">Selecting a role sets default permissions, which can be customized below.</span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label font-bold">Select Granular Permissions</label>
+                  {systemPermissions.length > 0 ? (
+                    <div className="permissions-checklist-grid">
+                      {systemPermissions.map((perm) => (
+                        <label key={perm} className="permission-checkbox-label">
+                          <input 
+                            type="checkbox"
+                            checked={targetPermissions.includes(perm)}
+                            onChange={() => handleToggleTargetPermissionSelection(perm)}
+                          />
+                          <span className="checkbox-custom" />
+                          <span className="permission-name-text">{perm.replace(/_/g, ' ')}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted italic">Loading system permissions...</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setAssignUser(null)} disabled={modalSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={modalSubmitting}>
+                  {modalSubmitting ? 'Saving Credentials...' : 'Save Settings'}
                 </button>
               </div>
             </form>

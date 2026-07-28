@@ -44,6 +44,7 @@ const Navbar: React.FC = () => {
       {/* Universal Dashboard Link */}
       <NavLink 
         to="/" 
+        end
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         onClick={closeMobileMenu}
       >
@@ -176,7 +177,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav">
-        <NavLink to="/" className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/" end className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={22} />
           <span>Home</span>
         </NavLink>
