@@ -1,0 +1,389 @@
+/* ============ Login.css — full rewrite: responsive + icon-overlap fixed ============ */
+
+* {
+  box-sizing: border-box;
+}
+
+.login-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* fixes mobile browser address-bar height jump */
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, var(--bg-main) 100%);
+  padding: 1.25rem;
+}
+
+.login-glass-box {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.login-logo-img {
+  height: clamp(40px, 10vw, 52px);
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.85rem;
+}
+
+.login-title,
+.login-brand-title {
+  font-size: clamp(1.15rem, 4vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--accent-secondary);
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.login-desc,
+.brand-subtitle {
+  font-size: clamp(0.78rem, 2.5vw, 0.85rem);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.brand-accent {
+  color: var(--accent-primary);
+}
+
+.tabs-container {
+  display: flex;
+  background: var(--bg-input);
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: 1.75rem;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.65rem 0.5rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  min-height: 40px;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.login-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+  animation: fadeIn var(--transition-fast) forwards;
+}
+
+.login-alert svg {
+  flex-shrink: 0;
+}
+
+.login-alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.login-alert-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+}
+
+/* ---- Input + icon wrapper (flexbox — icon and text can never overlap) ---- */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-input, #fff);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-with-icon:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(200, 32, 26, 0.08);
+}
+
+.input-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  /* Ensures icon container doesn't shrink */
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color var(--transition-fast);
+}
+
+.input-with-icon:focus-within .input-icon {
+  color: var(--accent-primary);
+}
+
+/* FIXED: Input has proper padding to avoid overlap with icon */
+.input-with-icon .form-input,
+.input-with-icon .form-select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 46px;
+  padding: 0 0.75rem 0 0;
+  /* Removed left padding since icon handles spacing */
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 16px;
+  /* prevents iOS Safari auto-zoom on focus */
+  line-height: 1.2;
+  outline: none;
+}
+
+/* FIXED: For inputs WITHOUT an icon, add left padding */
+.input-with-icon:not(:has(.input-icon)) .form-input {
+  padding-left: 0.75rem;
+}
+
+/* FIXED: For inputs WITH an icon, ensure text doesn't go under icon */
+.input-with-icon:has(.input-icon) .form-input {
+  padding-left: 0.25rem;
+  /* Small gap after icon */
+}
+
+/* FIXED: When password toggle is present, reserve space on the right */
+.input-with-icon .form-input.has-password-toggle {
+  padding-right: 3rem;
+  /* Space for eye icon */
+}
+
+/* FIXED: For mobile, ensure icon stays visible and text doesn't overlap */
+@media (max-width: 480px) {
+  .input-icon {
+    width: 2.25rem;
+    min-width: 2.25rem;
+  }
+
+  .input-with-icon .form-input,
+  .input-with-icon .form-select {
+    padding: 0 0.5rem 0 0.25rem;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  .input-with-icon .form-input.has-password-toggle {
+    padding-right: 2.75rem;
+  }
+}
+
+/* ---- Password Toggle Button (stays absolute — right side, safe zone) ---- */
+.password-toggle-btn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  z-index: 10;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(26, 26, 26, 0.03);
+}
+
+.password-toggle-btn:active {
+  background-color: rgba(26, 26, 26, 0.08);
+}
+
+/* Interactive focus and error input styling */
+.input-error {
+  border-color: var(--color-danger) !important;
+}
+
+.input-with-icon.input-error {
+  box-shadow: none;
+}
+
+.input-with-icon:has(.input-error):focus-within,
+.input-with-icon.input-error:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.login-submit-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  min-height: 46px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.95rem;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .login-glass-box {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .login-brand {
+    margin-bottom: 1.4rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.9rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-page-container {
+    padding: 2rem;
+  }
+
+  .login-glass-box {
+    padding: 3rem;
+  }
+}
+
+/* Forgot/Reset password styles */
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.forgot-pwd-link {
+  background: transparent;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.forgot-pwd-link:hover {
+  color: var(--accent-primary-hover);
+  text-decoration: underline;
+}
+
+.login-navigation-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.nav-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  transition: color var(--transition-fast);
+  min-height: 36px;
+}
+
+.nav-back-btn:hover {
+  color: var(--text-primary);
+}
+
+.nav-token-btn {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  transition: color var(--transition-fast);
+  min-height: 36px;
+}
+
+.nav-token-btn:hover {
+  color: var(--accent-primary-hover);
+  text-decoration: underline;
+}
+
+.centered-nav-btn {
+  margin: 1.5rem auto 0 auto;
+  justify-content: center;
+  width: 100%;
+}
