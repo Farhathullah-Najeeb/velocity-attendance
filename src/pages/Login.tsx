@@ -183,13 +183,13 @@ const Login: React.FC = () => {
         {/* Brand identity */}
         <div className="login-brand">
           <img src={logoBlack} alt="Velocity Home logo" className="login-logo-img" />
-          <h2 className="login-title">Attendance Hub</h2>
-          <p className="login-desc">
-            {mode === 'login' && 'Sign in to access your dashboard'}
-            {mode === 'forgot' && 'Reset your corporate login credentials'}
-            {mode === 'reset' && 'Create your new system password'}
-            {mode === 'setup' && 'Setup first Root Administrator (Super Admin)'}
-          </p>
+          {mode !== 'login' && (
+            <p className="login-desc">
+              {mode === 'forgot' && 'Reset your corporate login credentials'}
+              {mode === 'reset' && 'Create your new system password'}
+              {mode === 'setup' && 'Setup first Root Administrator (Super Admin)'}
+            </p>
+          )}
         </div>
 
         {error && (

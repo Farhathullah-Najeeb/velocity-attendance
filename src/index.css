@@ -427,8 +427,29 @@ body.modal-open { overflow: hidden; }
     padding: 0.65rem 1.1rem !important;
     font-size: 0.85rem !important;
     min-height: 44px;
+    white-space: nowrap;
   }
   .glass-card { padding: 1rem !important; }
+  
+  /* Responsive buttons inside cards */
+  .card-row-actions { 
+    flex-wrap: wrap; 
+  }
+  .card-row-actions .btn {
+    flex: 1 1 100%; /* Force stacking on very small screens or let them wrap */
+  }
+
+  /* Responsive tab buttons */
+  .tab-buttons {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem; /* Space for scrollbar */
+  }
+  .tab-buttons::-webkit-scrollbar {
+    height: 4px;
+    display: none; /* Hide default scrollbar */
+  }
 }
 
 /* ── Emp info cell (table) ─────────────── */
