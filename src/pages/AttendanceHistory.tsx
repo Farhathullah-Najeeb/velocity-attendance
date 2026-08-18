@@ -16,7 +16,10 @@ import {
   BarChart3, 
   Clock, 
   FileSpreadsheet, 
-  FileText 
+  FileText,
+  Clock3,
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import './AttendanceHistory.css';
 
@@ -75,6 +78,46 @@ const AttendanceHistory: React.FC = () => {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [exportLoading, setExportLoading] = useState<string | null>(null);
+
+  // Overtime Request Modal States
+  const [otModalOpen, setOtModalOpen] = useState(false);
+  const [selectedOtRecord, setSelectedOtRecord] = useState<IAttendance | null>(null);
+  const [otMinutes, setOtMinutes] = useState<number | ''>('');
+  const [otReason, setOtReason] = useState('');
+  const [otLoading, setOtLoading] = useState(false);
+  const [otMessage, setOtMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const openOtModal = (log: IAttendance) => {
+    setSelectedOtRecord(log);
+    setOtMinutes('');
+    setOtReason('');
+    setOtMessage(null);
+    setOtModalOpen(true);
+  };
+
+  const handleOtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOtRecord || !otMinutes || !otReason.trim()) return;
+    
+    setOtLoading(true);
+    setOtMessage(null);
+    try {
+      await api.post('/attendance/overtime/request', {
+        attendanceId: selectedOtRecord._id,
+        overtimeMinutes: Number(otMinutes),
+        reason: otReason.trim()
+      });
+      setOtMessage({ text: 'Overtime request submitted successfully.', type: 'success' });
+      setTimeout(() => {
+        setOtModalOpen(false);
+      }, 2000);
+    } catch (err: any) {
+      console.error('Overtime request error:', err);
+      setOtMessage({ text: err.response?.data?.message || 'Failed to submit overtime request.', type: 'error' });
+    } finally {
+      setOtLoading(false);
+    }
+  };
 
   // Date setup
   useEffect(() => {
@@ -297,6 +340,7 @@ const AttendanceHistory: React.FC = () => {
                         <th>Status Details</th>
                         <th>Exception Approval</th>
                         <th>Remarks</th>
+                        <th className="center-cell">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -327,6 +371,18 @@ const AttendanceHistory: React.FC = () => {
                           </td>
                           <td className="remarks-cell">
                             {log.remarks ? <span className="remark-text">"{log.remarks}"</span> : <span className="text-muted italic">—</span>}
+                          </td>
+                          <td className="center-cell">
+                            {log.checkOutTime && (
+                              <button 
+                                className="btn btn-secondary btn-sm" 
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => openOtModal(log)}
+                                title="Request Overtime"
+                              >
+                                <Clock3 size={14} /> OT
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -379,6 +435,18 @@ const AttendanceHistory: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      
+                      {log.checkOutTime && (
+                        <div className="card-row-actions" style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+                          <button 
+                            className="btn btn-secondary w-full"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                            onClick={() => openOtModal(log)}
+                          >
+                            <Clock3 size={14} /> Request Overtime
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -568,6 +636,75 @@ const AttendanceHistory: React.FC = () => {
                 Apply
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overtime Request Modal */}
+      {otModalOpen && selectedOtRecord && (
+        <div className="modal-backdrop">
+          <div className="modal-box glass-card fade-in">
+            <div className="modal-header">
+              <h3>Request Overtime</h3>
+              <button className="modal-close-btn" onClick={() => setOtModalOpen(false)}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleOtSubmit}>
+              <div className="modal-body">
+                <div className="exception-summary-preview">
+                  <p>Date: <strong>{new Date(selectedOtRecord.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</strong></p>
+                  <p>Timings: Check-in <strong>{formatTime(selectedOtRecord.checkInTime)}</strong> | Check-out <strong>{formatTime(selectedOtRecord.checkOutTime)}</strong></p>
+                </div>
+
+                {otMessage && (
+                  <div className={`modal-error-alert ${otMessage.type === 'success' ? 'alert-success-style' : ''}`} style={otMessage.type === 'success' ? { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid #10b981' } : {}}>
+                    {otMessage.type === 'error' ? <AlertTriangle size={16} /> : null}
+                    <span>{otMessage.text}</span>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label">
+                    Overtime Duration (Minutes) <span className="required-star">*</span>
+                  </label>
+                  <input 
+                    type="number"
+                    className="form-input modal-input" 
+                    placeholder="e.g. 120"
+                    value={otMinutes}
+                    onChange={(e) => setOtMinutes(e.target.value ? Number(e.target.value) : '')}
+                    min="1"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    Reason / Details <span className="required-star">*</span>
+                  </label>
+                  <textarea 
+                    className="form-textarea modal-textarea" 
+                    placeholder="Provide details about the overtime work..."
+                    value={otReason}
+                    onChange={(e) => setOtReason(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setOtModalOpen(false)} disabled={otLoading}>
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={otLoading || otMessage?.type === 'success'}
+                >
+                  {otLoading ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

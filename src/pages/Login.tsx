@@ -10,8 +10,8 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Mode: 'login' | 'forgot' | 'reset' | 'setup'
-  const [mode, setMode] = useState<'login' | 'forgot' | 'reset' | 'setup'>('login');
+  // Mode: 'login' | 'register' | 'forgot' | 'reset' | 'setup'
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset' | 'setup'>('login');
   
   // Password Visibility toggles
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +21,13 @@ const Login: React.FC = () => {
   // Login Inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Register Inputs
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regDepartment, setRegDepartment] = useState('');
+  const [regLocation, setRegLocation] = useState('');
   
   // Forgot / Reset Inputs
   const [resetEmail, setResetEmail] = useState('');
@@ -38,7 +45,7 @@ const Login: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const switchMode = (newMode: 'login' | 'forgot' | 'reset' | 'setup') => {
+  const switchMode = (newMode: 'login' | 'register' | 'forgot' | 'reset' | 'setup') => {
     setMode(newMode);
     setError(null);
     setSuccess(null);
@@ -61,6 +68,39 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || 'Login failed. Please verify credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Register Handler
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName || !regEmail || !regPassword || !regDepartment || !regLocation) {
+      setError('Please fill in all registration fields.');
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.post('/auth/register', {
+        name: regName,
+        email: regEmail,
+        password: regPassword,
+        department: regDepartment,
+        location: regLocation
+      });
+      setSuccess(res.data.message || 'Registration successful. Pending admin approval.');
+      // Switch back to login after 3 seconds
+      setTimeout(() => switchMode('login'), 3000);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -185,6 +225,7 @@ const Login: React.FC = () => {
           <img src={logoBlack} alt="Velocity Home logo" className="login-logo-img" />
           {mode !== 'login' && (
             <p className="login-desc">
+              {mode === 'register' && 'Register a new employee account'}
               {mode === 'forgot' && 'Reset your corporate login credentials'}
               {mode === 'reset' && 'Create your new system password'}
               {mode === 'setup' && 'Setup first Root Administrator (Super Admin)'}
@@ -265,6 +306,16 @@ const Login: React.FC = () => {
             </button>
 
             <div className="login-setup-prompt">
+              <span>Don't have an account?</span>
+              <button 
+                type="button" 
+                className="setup-admin-link-btn"
+                onClick={() => switchMode('register')}
+              >
+                Sign Up
+              </button>
+            </div>
+            <div className="login-setup-prompt" style={{ marginTop: '0.5rem' }}>
               <span>New database setup?</span>
               <button 
                 type="button" 
@@ -274,6 +325,102 @@ const Login: React.FC = () => {
                 Setup Super Admin
               </button>
             </div>
+          </form>
+        )}
+
+        {/* 1.5. Register View */}
+        {mode === 'register' && (
+          <form className="login-form" onSubmit={handleRegisterSubmit}>
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <div className="input-with-icon">
+                <User className="input-icon" size={18} />
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="John Doe" 
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <div className="input-with-icon">
+                <Mail className="input-icon" size={18} />
+                <input 
+                  type="email" 
+                  className="form-input" 
+                  placeholder="Email" 
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <div className="input-with-icon">
+                <Lock className="input-icon" size={18} />
+                <input 
+                  type={showSetupPassword ? "text" : "password"} 
+                  className="form-input has-password-toggle" 
+                  placeholder="Min. 6 characters" 
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  required
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => setShowSetupPassword(!showSetupPassword)}
+                >
+                  {showSetupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Department</label>
+              <div className="input-with-icon">
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ paddingLeft: '1rem' }}
+                  placeholder="e.g. Engineering" 
+                  value={regDepartment}
+                  onChange={(e) => setRegDepartment(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Location</label>
+              <div className="input-with-icon">
+                <input 
+                  type="text" 
+                  className="form-input"
+                  style={{ paddingLeft: '1rem' }}
+                  placeholder="e.g. Kerala" 
+                  value={regLocation}
+                  onChange={(e) => setRegLocation(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+              {loading ? 'Registering...' : 'Sign Up'}
+            </button>
+
+            <button type="button" className="nav-back-btn centered-nav-btn" onClick={() => switchMode('login')}>
+              <ArrowLeft size={16} />
+              <span>Back to Sign In</span>
+            </button>
           </form>
         )}
 

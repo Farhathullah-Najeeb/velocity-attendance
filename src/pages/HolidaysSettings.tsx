@@ -8,9 +8,12 @@ import {
   Calendar,
   Save,
   CalendarPlus,
-  Trash2
+  Trash2,
+  MapPin,
+  Plus
 } from 'lucide-react';
 import './HolidaysSettings.css';
+import type { ILocationPolicy } from '../types';
 
 const HolidaysSettings: React.FC = () => {
   // Settings States
@@ -29,6 +32,11 @@ const HolidaysSettings: React.FC = () => {
 
   // Alerts
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Location Policies States
+  const [locationPolicies, setLocationPolicies] = useState<ILocationPolicy[]>([]);
+  const [loadingPolicies, setLoadingPolicies] = useState(true);
+  const [savePoliciesLoading, setSavePoliciesLoading] = useState(false);
 
   const fetchSettings = async () => {
     setLoadingSettings(true);
@@ -58,9 +66,22 @@ const HolidaysSettings: React.FC = () => {
     }
   };
 
+  const fetchLocationPolicies = async () => {
+    setLoadingPolicies(true);
+    try {
+      const res = await api.get<{ policies: ILocationPolicy[] }>('/settings/location-policies');
+      setLocationPolicies(res.data.policies || []);
+    } catch (err) {
+      console.error('Error fetching location policies:', err);
+    } finally {
+      setLoadingPolicies(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
     fetchHolidays();
+    fetchLocationPolicies();
   }, []);
 
   // Update Settings Handler
@@ -138,6 +159,38 @@ const HolidaysSettings: React.FC = () => {
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  // Update Location Policies Handler
+  const handleUpdatePolicies = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavePoliciesLoading(true);
+    setMessage(null);
+    try {
+      await api.put('/settings/location-policies', {
+        policies: locationPolicies
+      });
+      setMessage({ text: 'Location policies updated successfully.', type: 'success' });
+    } catch (err: any) {
+      console.error('Update policies error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to update location policies.', type: 'error' });
+    } finally {
+      setSavePoliciesLoading(false);
+    }
+  };
+
+  const handlePolicyChange = (index: number, field: keyof ILocationPolicy, value: any) => {
+    const updated = [...locationPolicies];
+    updated[index] = { ...updated[index], [field]: value };
+    setLocationPolicies(updated);
+  };
+
+  const addPolicy = () => {
+    setLocationPolicies([...locationPolicies, { location: '', monthlyPaidLeaveQuota: 1 }]);
+  };
+
+  const removePolicy = (index: number) => {
+    setLocationPolicies(locationPolicies.filter((_, i) => i !== index));
   };
 
   return (
@@ -307,6 +360,77 @@ const HolidaysSettings: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Location Policies Section */}
+      <section className="settings-panel-card glass-card" style={{ marginTop: '1rem' }}>
+        <div className="panel-header">
+          <MapPin size={20} className="panel-header-icon color-cyan" />
+          <h3>Location-based Leave Policies</h3>
+        </div>
+        
+        {loadingPolicies ? (
+          <div className="panel-loading">
+            <div className="custom-spinner" />
+            <p>LOADING POLICIES...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleUpdatePolicies} className="settings-form">
+            <p className="subtitle" style={{ margin: 0, fontSize: '0.85rem' }}>
+              Define monthly paid leave quotas per location. Leave requests from a specific location will be validated against its active quota limit.
+            </p>
+            
+            <div className="policies-list">
+              {locationPolicies.map((policy, index) => (
+                <div key={index} className="policy-row" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                    <label className="form-label">Location Name</label>
+                    <input 
+                      type="text" 
+                      className="form-input"
+                      placeholder="e.g. Kerala"
+                      value={policy.location}
+                      onChange={(e) => handlePolicyChange(index, 'location', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                    <label className="form-label">Monthly Paid Leave Quota</label>
+                    <input 
+                      type="number" 
+                      className="form-input"
+                      min="0"
+                      value={policy.monthlyPaidLeaveQuota}
+                      onChange={(e) => handlePolicyChange(index, 'monthlyPaidLeaveQuota', Number(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-delete-holiday"
+                    style={{ marginTop: '20px' }}
+                    onClick={() => removePolicy(index)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button type="button" className="btn btn-secondary" onClick={addPolicy} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-start' }}>
+              <Plus size={16} /> Add Location Policy
+            </button>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary save-btn-full"
+              disabled={savePoliciesLoading}
+            >
+              <Save size={18} />
+              {savePoliciesLoading ? 'Saving changes...' : 'Save Location Policies'}
+            </button>
+          </form>
+        )}
+      </section>
     </div>
   );
 };

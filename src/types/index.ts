@@ -13,6 +13,7 @@ export interface IUser {
   email: string;
   role: 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN';
   department?: string;
+  location?: string;
   isActive?: boolean;
   isApproved?: boolean;
   customRole?: IRole;
@@ -33,8 +34,15 @@ export interface IAttendance {
   dateStr: string;
   checkInTime: string;
   checkOutTime?: string;
-  checkInGps?: IGpsCoords;
-  checkOutGps?: IGpsCoords;
+  checkInGps?: IGpsCoords & { address?: string };
+  checkOutGps?: IGpsCoords & { address?: string };
+  isWFH?: boolean;
+  workDurationMinutes?: number;
+  formattedWorkTime?: string;
+  lateMinutes?: number;
+  earlyExitMinutes?: number;
+  isExceededMonthlyAllowance?: boolean;
+  penaltyType?: 'NONE' | 'RED_MARK' | 'HALF_DAY';
   isLateArrival: boolean;
   isEarlyCheckout: boolean;
   isHolidayWork: boolean;
@@ -106,4 +114,20 @@ export interface ILoginResponse {
   role: 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN';
   access_token: string;
   token_type: string;
+}
+
+export interface INotification {
+  _id: string;
+  recipientId: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface ILocationPolicy {
+  location: string;
+  monthlyPaidLeaveQuota: number;
+  annualPaidLeaveQuota: number;
 }

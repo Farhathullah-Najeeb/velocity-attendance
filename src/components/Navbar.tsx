@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -12,8 +12,11 @@ import {
   Settings,
   FileSpreadsheet,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
+import api from '../services/api';
+import type { INotification } from '../types';
 import logoBlack from '../assets/logo_black.png';
 import './Navbar.css';
 
@@ -21,6 +24,50 @@ const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Notifications
+  const [notifications, setNotifications] = useState<INotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      // Optional: Polling every 1 minute
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data.notifications || []);
+      setUnreadCount(res.data.unreadCount || 0);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read', err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all as read', err);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -142,9 +189,15 @@ const Navbar: React.FC = () => {
         <div className="mobile-navbar-brand">
           <img src={logoBlack} alt="Velocity Home Logo" className="mobile-logo-img" />
         </div>
-        <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle menu">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="notification-wrapper mobile-only" onClick={() => setShowNotifications(!showNotifications)}>
+            <Bell size={22} className="notification-icon" />
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+          </div>
+          <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle menu">
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </header>
 
       {/* Desktop Sidebar / Mobile Drawer Container */}
@@ -155,13 +208,45 @@ const Navbar: React.FC = () => {
 
         <div className="user-profile-badge">
           <div className="user-avatar">
-            {user.name.charAt(0).toUpperCase()}
+            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="user-info">
-            <h4 className="user-name">{user.name}</h4>
+            <h4 className="user-name">{user?.name || 'Employee'}</h4>
             <span className="user-dept">{isAdmin ? user.role : (user.department || 'EMPLOYEE')}</span>
           </div>
+          <div className="notification-wrapper desktop-only" onClick={() => setShowNotifications(!showNotifications)}>
+            <Bell size={20} className="notification-icon" />
+            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+          </div>
         </div>
+
+        {showNotifications && (
+          <div className="notifications-dropdown">
+            <div className="notifications-header">
+              <h4>Notifications</h4>
+              {unreadCount > 0 && (
+                <button className="mark-all-btn" onClick={handleMarkAllAsRead}>Mark all read</button>
+              )}
+            </div>
+            <div className="notifications-list">
+              {notifications.length === 0 ? (
+                <div className="no-notifications">No notifications</div>
+              ) : (
+                notifications.map(notif => (
+                  <div 
+                    key={notif._id} 
+                    className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                    onClick={() => !notif.isRead && handleMarkAsRead(notif._id)}
+                  >
+                    <div className="notif-title">{notif.title}</div>
+                    <div className="notif-msg">{notif.message}</div>
+                    <div className="notif-time">{new Date(notif.createdAt).toLocaleDateString()}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         <nav className="sidebar-nav">
           {navLinks}

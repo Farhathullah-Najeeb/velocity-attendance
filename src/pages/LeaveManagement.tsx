@@ -28,6 +28,12 @@ const LeaveManagement: React.FC = () => {
   
   // UI states
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [quotaError, setQuotaError] = useState<{
+    location: string;
+    monthlyQuota: number;
+    monthlyUsed: number;
+    requestedDuration: number;
+  } | null>(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
 
   // Fetch leave list and balance
@@ -93,6 +99,7 @@ const LeaveManagement: React.FC = () => {
 
     setSubmitLoading(true);
     setMessage(null);
+    setQuotaError(null);
     try {
       const res = await api.post('/leaves/apply', {
         type,
@@ -112,10 +119,15 @@ const LeaveManagement: React.FC = () => {
       fetchData();
     } catch (err: any) {
       console.error('Apply leave error:', err);
-      setMessage({
-        text: err.response?.data?.message || 'Failed to submit leave. Please verify date parameters.',
-        type: 'error'
-      });
+      if (err.response?.status === 400 && err.response?.data?.monthlyQuota !== undefined) {
+        setQuotaError(err.response.data);
+        setMessage({ text: err.response.data.message || 'Leave quota exceeded.', type: 'error' });
+      } else {
+        setMessage({
+          text: err.response?.data?.message || 'Failed to submit leave. Please verify date parameters.',
+          type: 'error'
+        });
+      }
     } finally {
       setSubmitLoading(false);
     }
@@ -172,6 +184,7 @@ const LeaveManagement: React.FC = () => {
           onClick={() => {
             setShowApplyForm(!showApplyForm);
             setMessage(null);
+            setQuotaError(null);
           }}
         >
           <PlusCircle size={20} />
@@ -183,6 +196,22 @@ const LeaveManagement: React.FC = () => {
         <div className={`leaves-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
           {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
           <span>{message.text}</span>
+        </div>
+      )}
+
+      {quotaError && (
+        <div className="leaves-alert alert-danger" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', marginTop: '0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            <XCircle size={20} style={{ marginRight: '8px' }} />
+            Policy Restriction: Location Leave Quota Exceeded
+          </div>
+          <p style={{ margin: '0 0 0.5rem 28px', fontSize: '0.9rem' }}>
+            Your designated location (<strong>{quotaError.location}</strong>) limits employees to <strong>{quotaError.monthlyQuota} day(s)</strong> of paid leave per month.
+          </p>
+          <ul style={{ margin: '0 0 0 28px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <li>Used this month: {quotaError.monthlyUsed} day(s)</li>
+            <li>Requested duration: {quotaError.requestedDuration} day(s)</li>
+          </ul>
         </div>
       )}
 

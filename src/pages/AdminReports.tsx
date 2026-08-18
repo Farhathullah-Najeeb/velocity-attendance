@@ -25,6 +25,8 @@ interface ReportRow {
   earlyCheckouts: number;
   leavesTaken: number;
   holidayWorkDays: number;
+  wfhDays?: number;
+  overtimeMinutes?: number;
 }
 
 interface ReportResponse {
@@ -236,6 +238,8 @@ const AdminReports: React.FC = () => {
                   <th className="center-cell">Early Out</th>
                   <th className="center-cell">Leaves</th>
                   <th className="center-cell">Holiday Work</th>
+                  <th className="center-cell">WFH Days</th>
+                  <th className="center-cell">Overtime (Hrs)</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,6 +263,12 @@ const AdminReports: React.FC = () => {
                     <td className="center-cell count-yellow">{row.earlyCheckouts}</td>
                     <td className="center-cell count-purple">{row.leavesTaken}</td>
                     <td className="center-cell count-cyan">{row.holidayWorkDays}</td>
+                    <td className="center-cell">{row.wfhDays || 0}</td>
+                    <td className="center-cell">
+                      {row.overtimeMinutes 
+                        ? (row.overtimeMinutes / 60).toFixed(1) 
+                        : '0.0'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

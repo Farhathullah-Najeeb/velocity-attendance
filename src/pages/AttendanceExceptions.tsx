@@ -8,7 +8,8 @@ import {
   Calendar,
   AlertTriangle,
   Check,
-  X
+  X,
+  DollarSign
 } from 'lucide-react';
 import './AttendanceExceptions.css';
 
@@ -18,8 +19,9 @@ const AttendanceExceptions: React.FC = () => {
   
   // Modal states
   const [selectedException, setSelectedException] = useState<IAttendance | null>(null);
-  const [modalAction, setModalAction] = useState<'approve' | 'reject' | null>(null);
+  const [modalAction, setModalAction] = useState<'approve' | 'reject' | 'penalty' | null>(null);
   const [remarks, setRemarks] = useState('');
+  const [penaltyAmount, setPenaltyAmount] = useState<number | ''>('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -53,10 +55,11 @@ const AttendanceExceptions: React.FC = () => {
 
 
 
-  const openActionModal = (record: IAttendance, action: 'approve' | 'reject') => {
+  const openActionModal = (record: IAttendance, action: 'approve' | 'reject' | 'penalty') => {
     setSelectedException(record);
     setModalAction(action);
     setRemarks('');
+    setPenaltyAmount('');
     setModalError(null);
   };
 
@@ -76,13 +79,23 @@ const AttendanceExceptions: React.FC = () => {
       return;
     }
 
+    if (modalAction === 'penalty' && (!remarks.trim() || penaltyAmount === '')) {
+      setModalError('Both remarks and penalty amount are required for applying a penalty.');
+      return;
+    }
+
     setActionLoading(true);
     setModalError(null);
     setMessage(null);
 
     try {
       const endpoint = `/attendance/${selectedException._id}/${modalAction}`;
-      const res = await api.patch(endpoint, { remarks: remarks.trim() });
+      const payload: any = { remarks: remarks.trim() };
+      if (modalAction === 'penalty') {
+        payload.penaltyAmount = Number(penaltyAmount);
+      }
+      
+      const res = await api.patch(endpoint, payload);
       
       setMessage({ 
         text: res.data.message || `Exception successfully ${modalAction}d.`, 
@@ -236,6 +249,14 @@ const AttendanceExceptions: React.FC = () => {
                             >
                               <X size={16} />
                             </button>
+                            <button 
+                              className="action-btn-circle"
+                              title="Apply Penalty"
+                              style={{ color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }}
+                              onClick={() => openActionModal(record, 'penalty')}
+                            >
+                              <DollarSign size={16} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -331,6 +352,14 @@ const AttendanceExceptions: React.FC = () => {
                         <X size={14} />
                         <span>Reject</span>
                       </button>
+                      <button 
+                        className="btn btn-secondary flex-1"
+                        style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                        onClick={() => openActionModal(record, 'penalty')}
+                      >
+                        <DollarSign size={14} />
+                        <span>Penalty</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -370,17 +399,34 @@ const AttendanceExceptions: React.FC = () => {
                     <span>{modalError}</span>
                   </div>
                 )}
+                
+                {modalAction === 'penalty' && (
+                  <div className="form-group">
+                    <label className="form-label">
+                      Penalty Amount <span className="required-star">*</span>
+                    </label>
+                    <input 
+                      type="number"
+                      className="form-input modal-input" 
+                      placeholder="Enter amount to deduct..."
+                      value={penaltyAmount}
+                      onChange={(e) => setPenaltyAmount(e.target.value ? Number(e.target.value) : '')}
+                      min="0"
+                      required
+                    />
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label className="form-label">
-                    Remarks {modalAction === 'reject' && <span className="required-star">*</span>}
+                    Remarks {(modalAction === 'reject' || modalAction === 'penalty') && <span className="required-star">*</span>}
                   </label>
                   <textarea 
                     className="form-textarea modal-textarea" 
-                    placeholder={modalAction === 'approve' ? 'Optional approval comments...' : 'Provide reasoning for rejecting exception...'}
+                    placeholder={modalAction === 'approve' ? 'Optional approval comments...' : 'Provide reasoning...'}
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    required={modalAction === 'reject'}
+                    required={modalAction === 'reject' || modalAction === 'penalty'}
                   />
                 </div>
               </div>
@@ -394,7 +440,7 @@ const AttendanceExceptions: React.FC = () => {
                   className={`btn ${modalAction === 'approve' ? 'btn-primary' : 'btn-danger'}`}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Saving...' : modalAction === 'approve' ? 'Approve Exception' : 'Reject Exception'}
+                  {actionLoading ? 'Saving...' : modalAction === 'approve' ? 'Approve Exception' : modalAction === 'reject' ? 'Reject Exception' : 'Apply Penalty'}
                 </button>
               </div>
             </form>

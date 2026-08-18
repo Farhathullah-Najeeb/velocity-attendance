@@ -26,8 +26,9 @@ const EmployeeDashboard: React.FC = () => {
   const [todayAttendance, setTodayAttendance] = useState<IAttendance | null>(null);
   const [loadingAttendance, setLoadingAttendance] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [isWFH, setIsWFH] = useState(false);
 
   // Stats and Holidays
   const [leaveBalance, setLeaveBalance] = useState<ILeaveBalance | null>(null);
@@ -98,10 +99,23 @@ const EmployeeDashboard: React.FC = () => {
 
     setGpsError(null);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        let addressStr = '';
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const geoData = await geoRes.json();
+          if (geoData && geoData.display_name) {
+            addressStr = geoData.display_name;
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed', e);
+        }
+        
         setCoords({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
+          latitude,
+          longitude,
+          address: addressStr
         });
       },
       (error) => {
@@ -143,7 +157,9 @@ const EmployeeDashboard: React.FC = () => {
     setActionLoading(true);
     setMessage(null);
     try {
-      const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+      const payload = coords 
+        ? { latitude: coords.latitude, longitude: coords.longitude, address: coords.address, isWFH } 
+        : { isWFH };
       const res = await api.post('/attendance/check-in', payload);
 
       setTodayAttendance(res.data.attendance);
@@ -168,7 +184,9 @@ const EmployeeDashboard: React.FC = () => {
     setActionLoading(true);
     setMessage(null);
     try {
-      const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+      const payload = coords 
+        ? { latitude: coords.latitude, longitude: coords.longitude, address: coords.address } 
+        : {};
       const res = await api.post('/attendance/check-out', payload);
 
       setTodayAttendance(res.data.attendance);
@@ -206,7 +224,7 @@ const EmployeeDashboard: React.FC = () => {
       <header className="dashboard-header">
         <div className="dashboard-title-area">
           <div className="dashboard-title-info">
-            <h1>Welcome back, {user?.name}!</h1>
+            <h1>Welcome back, {user?.name || 'Employee'}!</h1>
             <p className="subtitle">Track your attendance and manage leaves from your personal hub.</p>
           </div>
           <button 
@@ -259,13 +277,25 @@ const EmployeeDashboard: React.FC = () => {
           <div className="gps-coordinate-status">
             <MapPin size={16} />
             {coords ? (
-              <span>GPS Connected: {coords.latitude.toFixed(4)}°, {coords.longitude.toFixed(4)}°</span>
+              <span title={coords.address}>
+                GPS Connected: {coords.latitude.toFixed(4)}°, {coords.longitude.toFixed(4)}°
+                {coords.address && ` (${coords.address.split(',')[0]})`}
+              </span>
             ) : gpsError ? (
               <span className="gps-warning">{gpsError}</span>
             ) : (
               <span>Locating coordinates...</span>
             )}
           </div>
+          
+          {!todayAttendance && !loadingAttendance && (
+            <div className="wfh-toggle-container" style={{ margin: '15px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <label htmlFor="wfh-toggle" style={{ fontWeight: '500', color: 'var(--text-main)' }}>Work From Home</label>
+              <div className={`custom-toggle ${isWFH ? 'active' : ''}`} onClick={() => setIsWFH(!isWFH)} style={{ cursor: 'pointer', width: '44px', height: '24px', borderRadius: '12px', background: isWFH ? 'var(--primary-glow)' : 'var(--border-color)', position: 'relative', transition: '0.3s' }}>
+                <div style={{ position: 'absolute', top: '2px', left: isWFH ? '22px' : '2px', width: '20px', height: '20px', background: 'white', borderRadius: '50%', transition: '0.3s' }} />
+              </div>
+            </div>
+          )}
 
           <div className="action-buttons-group">
             {loadingAttendance ? (
@@ -311,11 +341,25 @@ const EmployeeDashboard: React.FC = () => {
                 <span>Check-in Time:</span>
                 <strong>{new Date(todayAttendance.checkInTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })}</strong>
               </div>
-              {todayAttendance.checkOutTime && (
+              {todayAttendance.isWFH && (
                 <div className="log-row">
-                  <span>Check-out Time:</span>
-                  <strong>{new Date(todayAttendance.checkOutTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })}</strong>
+                  <span>Work Mode:</span>
+                  <span className="badge badge-info">WORK FROM HOME</span>
                 </div>
+              )}
+              {todayAttendance.checkOutTime && (
+                <>
+                  <div className="log-row">
+                    <span>Check-out Time:</span>
+                    <strong>{new Date(todayAttendance.checkOutTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })}</strong>
+                  </div>
+                  {todayAttendance.formattedWorkTime && (
+                    <div className="log-row">
+                      <span>Total Work Duration:</span>
+                      <strong>{todayAttendance.formattedWorkTime}</strong>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="log-row-compliance">
@@ -346,39 +390,39 @@ const EmployeeDashboard: React.FC = () => {
             <h3>Leave Balances</h3>
           </div>
 
-          {leaveBalance ? (
+          {leaveBalance?.balances ? (
             <div className="leave-progress-grid">
               <div className="leave-progress-item">
                 <div className="circular-progress-box">
                   {/* Visual Progress percentage */}
-                  <span className="count-large">{leaveBalance.balances.CASUAL.remaining}</span>
-                  <span className="count-sub">/ {leaveBalance.balances.CASUAL.allowed} Days</span>
+                  <span className="count-large">{leaveBalance.balances.CASUAL?.remaining || 0}</span>
+                  <span className="count-sub">/ {leaveBalance.balances.CASUAL?.allowed || 0} Days</span>
                 </div>
                 <div className="leave-progress-details">
                   <h4>Casual Leave</h4>
-                  <p className="text-muted">Taken: {leaveBalance.balances.CASUAL.taken} days</p>
+                  <p className="text-muted">Taken: {leaveBalance.balances.CASUAL?.taken || 0} days</p>
                 </div>
               </div>
 
               <div className="leave-progress-item">
                 <div className="circular-progress-box sick-color">
-                  <span className="count-large">{leaveBalance.balances.SICK.remaining}</span>
-                  <span className="count-sub">/ {leaveBalance.balances.SICK.allowed} Days</span>
+                  <span className="count-large">{leaveBalance.balances.SICK?.remaining || 0}</span>
+                  <span className="count-sub">/ {leaveBalance.balances.SICK?.allowed || 0} Days</span>
                 </div>
                 <div className="leave-progress-details">
                   <h4>Sick Leave</h4>
-                  <p className="text-muted">Taken: {leaveBalance.balances.SICK.taken} days</p>
+                  <p className="text-muted">Taken: {leaveBalance.balances.SICK?.taken || 0} days</p>
                 </div>
               </div>
 
               <div className="leave-progress-item comp-color">
                 <div className="circular-progress-box comp-color">
-                  <span className="count-large">{leaveBalance.balances.COMPENSATORY.remaining}</span>
+                  <span className="count-large">{leaveBalance.balances.COMPENSATORY?.remaining || 0}</span>
                   <span className="count-sub">Credits</span>
                 </div>
                 <div className="leave-progress-details">
                   <h4>Comp-Off Balance</h4>
-                  <p className="text-muted">Earned: {leaveBalance.balances.COMPENSATORY.earned} | Used: {leaveBalance.balances.COMPENSATORY.used}</p>
+                  <p className="text-muted">Earned: {leaveBalance.balances.COMPENSATORY?.earned || 0} | Used: {leaveBalance.balances.COMPENSATORY?.used || 0}</p>
                 </div>
               </div>
             </div>
