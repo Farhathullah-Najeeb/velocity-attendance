@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
 import EmployeeDashboard from './EmployeeDashboard';
+import { useAuth } from '../context/AuthContext';
 import AdminDashboard from './AdminDashboard';
 
 const Dashboard: React.FC = () => {

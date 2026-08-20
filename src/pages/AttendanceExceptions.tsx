@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
 import type { IAttendance, IOvertime } from '../types';
 import { 
-  CheckCircle, 
-  XCircle, 
   MapPin, 
   Calendar,
-  AlertTriangle,
   Check,
   X,
+  AlertTriangle,
+  CheckCircle,
   ShieldAlert,
   Clock
 } from 'lucide-react';
@@ -40,7 +42,10 @@ const AttendanceExceptions: React.FC = () => {
   const [otRemarks, setOtRemarks] = useState('');
 
   // General Notification Alert
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type);
+  };
 
   const fetchExceptions = async () => {
     setLoadingExceptions(true);
@@ -128,7 +133,6 @@ const AttendanceExceptions: React.FC = () => {
 
     setActionLoading(true);
     setModalError(null);
-    setMessage(null);
 
     try {
       const endpoint = `/attendance/${selectedException._id}/${modalAction}`;
@@ -165,7 +169,6 @@ const AttendanceExceptions: React.FC = () => {
 
     setActionLoading(true);
     setModalError(null);
-    setMessage(null);
 
     try {
       const endpoint = `/overtime/${selectedOt._id}/${otAction}`;
@@ -209,42 +212,31 @@ const AttendanceExceptions: React.FC = () => {
           <h1>Moderation Center</h1>
           <p className="subtitle">Moderate pending attendance exceptions and overtime requests submitted by employees.</p>
         </div>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+          <button
+            className={`btn ${activeTab === 'attendance' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('attendance')}
+          >
+            <AlertTriangle size={16} />
+            <span>Attendance Exceptions ({exceptions.length})</span>
+          </button>
+
+          <button
+            className={`btn ${activeTab === 'overtime' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('overtime')}
+          >
+            <Clock size={16} />
+            <span>Overtime Requests ({overtimes.length})</span>
+          </button>
+        </div>
       </header>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-        <button
-          className={`btn ${activeTab === 'attendance' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('attendance')}
-        >
-          <AlertTriangle size={16} />
-          <span>Attendance Exceptions ({exceptions.length})</span>
-        </button>
-
-        <button
-          className={`btn ${activeTab === 'overtime' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('overtime')}
-        >
-          <Clock size={16} />
-          <span>Overtime Requests ({overtimes.length})</span>
-        </button>
-      </div>
-
-      {message && (
-        <div className={`exceptions-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
-          {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-          <span>{message.text}</span>
-        </div>
-      )}
-
-      {/* ATTENDANCE EXCEPTIONS TAB */}
+      {/* EXCEPTIONS TAB */}
       {activeTab === 'attendance' && (
         <div className="exceptions-list-section glass-card">
           {loadingExceptions ? (
-            <div className="table-loading-exceptions">
-              <div className="custom-spinner" />
-              <p>SYNCING EXCEPTION LOGS...</p>
-            </div>
+            <SkeletonLoader type="table" count={5} />
           ) : exceptions.length > 0 ? (
             <div className="leave-logs-container">
               {/* Desktop Table View */}
@@ -430,11 +422,11 @@ const AttendanceExceptions: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="no-exceptions-view">
-              <CheckCircle size={40} className="all-clear-icon" />
-              <h3>All Attendance Exceptions Handled</h3>
-              <p className="text-muted">There are no pending late-arrival or early-checkout exception validations left to moderate.</p>
-            </div>
+            <EmptyState 
+              icon={<CheckCircle size={48} strokeWidth={1.5} style={{ color: 'var(--color-success)' }} />}
+              title="All Attendance Exceptions Handled" 
+              description="There are no pending late-arrival or early-checkout exception validations left to moderate." 
+            />
           )}
         </div>
       )}
@@ -443,10 +435,7 @@ const AttendanceExceptions: React.FC = () => {
       {activeTab === 'overtime' && (
         <div className="exceptions-list-section glass-card">
           {loadingOvertimes ? (
-            <div className="table-loading-exceptions">
-              <div className="custom-spinner" />
-              <p>LOADING PENDING OVERTIME REQUESTS...</p>
-            </div>
+            <SkeletonLoader type="table" count={5} />
           ) : overtimes.length > 0 ? (
             <div className="leave-logs-container">
               <div className="table-responsive hide-on-mobile">
@@ -525,11 +514,11 @@ const AttendanceExceptions: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="no-exceptions-view">
-              <CheckCircle size={40} className="all-clear-icon" />
-              <h3>No Pending Overtime Requests</h3>
-              <p className="text-muted">All overtime requests have been moderated.</p>
-            </div>
+            <EmptyState 
+              icon={<CheckCircle size={48} strokeWidth={1.5} style={{ color: 'var(--color-success)' }} />}
+              title="No Pending Overtime Requests" 
+              description="All overtime requests have been moderated." 
+            />
           )}
         </div>
       )}

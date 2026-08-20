@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
 import type { IAttendance } from '../types';
 import { 
   BarChart, 
@@ -18,8 +21,7 @@ import {
   FileSpreadsheet, 
   FileText,
   Clock3,
-  AlertTriangle
-} from 'lucide-react';
+  } from 'lucide-react';
 import './AttendanceHistory.css';
 
 interface ReportSummary {
@@ -85,7 +87,11 @@ const AttendanceHistory: React.FC = () => {
   const [otEndTime, setOtEndTime] = useState('20:30');
   const [otReason, setOtReason] = useState('');
   const [otLoading, setOtLoading] = useState(false);
-  const [otMessage, setOtMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  
+  const { showToast } = useToast();
+  const setOtMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type);
+  };
 
   const openOtModal = (log: IAttendance) => {
     setSelectedOtRecord(log);
@@ -210,7 +216,7 @@ const AttendanceHistory: React.FC = () => {
       document.body.removeChild(link);
     } catch (err) {
       console.error('Export error:', err);
-      alert('Failed to download report. Please try again.');
+      showToast('Failed to download report. Please try again.', 'error');
     } finally {
       setExportLoading(null);
     }
@@ -331,7 +337,7 @@ const AttendanceHistory: React.FC = () => {
 
           <div className="logs-table-card glass-card">
             {loadingLogs ? (
-              <p className="text-muted text-center padding-2rem">Loading logs...</p>
+              <SkeletonLoader type="table" count={5} />
             ) : history.length > 0 ? (
               <div className="history-logs-container">
                 {/* Desktop Table View */}
@@ -458,7 +464,7 @@ const AttendanceHistory: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-muted text-center padding-2rem">No logs found for the selected timeframe.</p>
+              <EmptyState title="No Logs Found" description="No attendance logs found for the selected timeframe." />
             )}
           </div>
         </div>
@@ -500,7 +506,7 @@ const AttendanceHistory: React.FC = () => {
               <h4>Attendance Distribution (Last 30 Days)</h4>
               
               {loadingSummary ? (
-                <p className="text-muted">Loading chart analytics...</p>
+                <SkeletonLoader type="card" count={1} />
               ) : summary ? (
                 <div style={{ width: '100%', height: 260 }}>
                   <ResponsiveContainer>
@@ -525,7 +531,7 @@ const AttendanceHistory: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <p className="text-muted">No analytics reports generated yet.</p>
+                <EmptyState title="No Analytics" description="No analytics reports generated yet." />
               )}
             </div>
 
@@ -662,13 +668,6 @@ const AttendanceHistory: React.FC = () => {
                   <p>Timings: Check-in <strong>{formatTime(selectedOtRecord.checkInTime)}</strong> | Check-out <strong>{formatTime(selectedOtRecord.checkOutTime)}</strong></p>
                 </div>
 
-                {otMessage && (
-                  <div className={`modal-error-alert ${otMessage.type === 'success' ? 'alert-success-style' : ''}`} style={otMessage.type === 'success' ? { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid #10b981' } : {}}>
-                    {otMessage.type === 'error' ? <AlertTriangle size={16} /> : null}
-                    <span>{otMessage.text}</span>
-                  </div>
-                )}
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label">
@@ -717,7 +716,7 @@ const AttendanceHistory: React.FC = () => {
                 <button 
                   type="submit" 
                   className="btn btn-primary"
-                  disabled={otLoading || otMessage?.type === 'success'}
+                  disabled={otLoading}
                 >
                   {otLoading ? 'Submitting...' : 'Submit Request'}
                 </button>

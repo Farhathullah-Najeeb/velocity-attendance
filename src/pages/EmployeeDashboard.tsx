@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
 import api from '../services/api';
 import type { IAttendance, ILeaveBalance, IHoliday } from '../types';
 import {
   Clock,
   MapPin,
   Calendar,
-  AlertTriangle,
   UserCheck,
-  CheckCircle,
-  XCircle,
   Umbrella,
   Compass,
   RefreshCw
@@ -33,7 +33,10 @@ const EmployeeDashboard: React.FC = () => {
   // Stats and Holidays
   const [leaveBalance, setLeaveBalance] = useState<ILeaveBalance | null>(null);
   const [holidays, setHolidays] = useState<IHoliday[]>([]);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const { showToast } = useToast();
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'warning' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type === 'warning' ? 'info' : msg.type);
+  };
 
   // Tick clock
   useEffect(() => {
@@ -243,22 +246,7 @@ const EmployeeDashboard: React.FC = () => {
         </div>
       </header>
 
-      {message && (
-        <div className={`dashboard-alert dashboard-alert-${message.type}`}>
-          {message.type === 'success' && <CheckCircle size={20} />}
-          {message.type === 'error' && <XCircle size={20} />}
-          {message.type === 'warning' && <AlertTriangle size={20} />}
-          <div>
-            <strong>
-              {message.type === 'success' && 'Success: '}
-              {message.type === 'error' && 'Error: '}
-              {message.type === 'warning' && 'Notice: '}
-            </strong>
-            {message.text}
-          </div>
-        </div>
-      )}
-
+      {/* Main Grid container */}
       <div className="dashboard-grid">
         {/* Attendance Action Panel */}
         <section className="attendance-action-card glass-card">
@@ -427,7 +415,7 @@ const EmployeeDashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-muted">Loading leave balance metadata...</p>
+            <SkeletonLoader type="card" count={3} />
           )}
         </section>
 
@@ -462,7 +450,7 @@ const EmployeeDashboard: React.FC = () => {
                 );
               })
             ) : (
-              <p className="text-muted">No upcoming holidays scheduled.</p>
+              <EmptyState title="No Holidays" description="No upcoming holidays scheduled." />
             )}
           </div>
         </section>

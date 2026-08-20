@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
+import ConfirmModal from '../components/ConfirmModal';
 import type { ISettings, IHoliday, ILocationPolicy, ISite } from '../types';
 import { 
-  CheckCircle, 
-  XCircle, 
   Clock, 
   Calendar,
   Save,
@@ -46,8 +48,14 @@ const HolidaysSettings: React.FC = () => {
   const [siteAddress, setSiteAddress] = useState('');
   const [siteSaving, setSiteSaving] = useState(false);
 
-  // Alerts
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  // General
+  const { showToast } = useToast();
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type);
+  };
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; isDestructive: boolean }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, isDestructive: true
+  });
 
   // Location Policies States
   const [locationPolicies, setLocationPolicies] = useState<ILocationPolicy[]>([]);
@@ -121,7 +129,6 @@ const HolidaysSettings: React.FC = () => {
   const handleUpdateSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveLoading(true);
-    setMessage(null);
     try {
       await api.patch('/settings', {
         officeStartTime,
@@ -143,7 +150,7 @@ const HolidaysSettings: React.FC = () => {
 
   const handleGetLocationForOffice = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      showToast('Geolocation is not supported by your browser.', 'error');
       return;
     }
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -151,7 +158,8 @@ const HolidaysSettings: React.FC = () => {
       setOfficeLng(pos.coords.longitude);
       setMessage({ text: 'Current GPS location set as Main Office coordinates.', type: 'success' });
     }, (err) => {
-      alert('Could not retrieve location: ' + err.message);
+      console.error('Geolocation error:', err);
+      showToast('Could not retrieve location: ' + err.message, 'error');
     });
   };
 
@@ -164,7 +172,6 @@ const HolidaysSettings: React.FC = () => {
     }
 
     setAddHolidayLoading(true);
-    setMessage(null);
     try {
       await api.post('/holidays', {
         date: holidayDate,
@@ -184,24 +191,29 @@ const HolidaysSettings: React.FC = () => {
 
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
-  const handleDeleteHoliday = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this company holiday?')) return;
-    
-    setDeleteLoading(id);
-    setMessage(null);
-    try {
-      await api.delete(`/holidays/${id}`);
-      setMessage({ text: 'Calendar holiday removed successfully.', type: 'success' });
-      fetchHolidays();
-    } catch (err: any) {
-      console.error('Delete holiday error:', err);
-      setMessage({ 
-        text: err.response?.data?.message || 'Failed to remove calendar holiday.', 
-        type: 'error' 
-      });
-    } finally {
-      setDeleteLoading(null);
-    }
+  const handleDeleteHoliday = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Holiday',
+      message: 'Are you sure you want to delete this company holiday?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setDeleteLoading(id);
+        try {
+          await api.delete(`/holidays/${id}`);
+          setMessage({ text: 'Calendar holiday removed successfully.', type: 'success' });
+          fetchHolidays();
+        } catch (err: any) {
+          console.error('Delete holiday error:', err);
+          setMessage({ 
+            text: err.response?.data?.message || 'Failed to remove calendar holiday.', 
+            type: 'error' 
+          });
+        } finally {
+          setDeleteLoading(null);
+        }
+      }
+    });
   };
 
   // Location Policies Handlers
@@ -223,7 +235,6 @@ const HolidaysSettings: React.FC = () => {
   const handleUpdatePolicies = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavePoliciesLoading(true);
-    setMessage(null);
     try {
       for (const pol of locationPolicies) {
         if (pol.location.trim()) {
@@ -272,7 +283,6 @@ const HolidaysSettings: React.FC = () => {
     }
 
     setSiteSaving(true);
-    setMessage(null);
     try {
       const payload = {
         name: siteName.trim(),
@@ -300,16 +310,23 @@ const HolidaysSettings: React.FC = () => {
     }
   };
 
-  const handleDeleteSite = async (siteId: string) => {
-    if (!window.confirm('Are you sure you want to delete this work site location?')) return;
-    try {
-      await api.delete(`/sites/${siteId}`);
-      setMessage({ text: 'Work site deleted successfully.', type: 'success' });
-      fetchSites();
-    } catch (err: any) {
-      console.error('Delete site error:', err);
-      setMessage({ text: err.response?.data?.message || 'Failed to delete site.', type: 'error' });
-    }
+  const handleDeleteSite = (siteId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Work Site',
+      message: 'Are you sure you want to delete this work site location?',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/sites/${siteId}`);
+          setMessage({ text: 'Work site deleted successfully.', type: 'success' });
+          fetchSites();
+        } catch (err: any) {
+          console.error('Delete site error:', err);
+          setMessage({ text: err.response?.data?.message || 'Failed to delete site.', type: 'error' });
+        }
+      }
+    });
   };
 
   const formatDate = (dateStr: string) => {
@@ -325,16 +342,22 @@ const HolidaysSettings: React.FC = () => {
       <header className="settings-header">
         <div>
           <h1>System Configuration Hub</h1>
-          <p className="subtitle">Configure company office hours, location leave quotas, work site locations, and calendar holidays.</p>
+          <p className="text-muted">Manage global office timing, company holidays, and authorized branch locations.</p>
         </div>
       </header>
 
-      {message && (
-        <div className={`settings-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
-          {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-          <span>{message.text}</span>
-        </div>
-      )}
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDestructive={confirmModal.isDestructive}
+      />
 
       {/* Grid Layout for Configuration Panels */}
       <div className="settings-grid-layout">
@@ -346,9 +369,7 @@ const HolidaysSettings: React.FC = () => {
           </div>
 
           {loadingSettings ? (
-            <div className="panel-loading">
-              <div className="custom-spinner" />
-            </div>
+            <SkeletonLoader type="card" count={1} />
           ) : (
             <form onSubmit={handleUpdateSettings} className="settings-form">
               <div className="form-group">
@@ -498,9 +519,7 @@ const HolidaysSettings: React.FC = () => {
           <div className="holiday-list-scroller-section">
             <h4>Registered Holidays</h4>
             {loadingHolidays ? (
-              <div className="panel-loading">
-                <div className="custom-spinner" />
-              </div>
+              <SkeletonLoader type="table" count={3} />
             ) : holidays.length > 0 ? (
               <div className="holidays-grid-view">
                 {holidays.map((holiday) => {
@@ -533,7 +552,7 @@ const HolidaysSettings: React.FC = () => {
                 })}
               </div>
             ) : (
-              <p className="text-muted text-center padding-1rem">No company calendar holidays configured yet.</p>
+              <EmptyState title="No Holidays Configured" description="No company calendar holidays configured yet." />
             )}
           </div>
         </section>
@@ -552,9 +571,7 @@ const HolidaysSettings: React.FC = () => {
         </div>
 
         {loadingSites ? (
-          <div className="panel-loading">
-            <div className="custom-spinner" />
-          </div>
+          <SkeletonLoader type="table" count={2} />
         ) : sites.length > 0 ? (
           <div className="holidays-grid-view" style={{ marginTop: '1rem' }}>
             {sites.map(site => (
@@ -576,7 +593,7 @@ const HolidaysSettings: React.FC = () => {
             ))}
           </div>
         ) : (
-          <p className="text-muted text-center padding-1rem">No work site locations configured yet.</p>
+          <EmptyState title="No Sites Configured" description="No work site locations configured yet." />
         )}
       </section>
 
@@ -588,10 +605,7 @@ const HolidaysSettings: React.FC = () => {
         </div>
         
         {loadingPolicies ? (
-          <div className="panel-loading">
-            <div className="custom-spinner" />
-            <p>LOADING POLICIES...</p>
-          </div>
+          <SkeletonLoader type="card" count={1} />
         ) : (
           <form onSubmit={handleUpdatePolicies} className="settings-form">
             <p className="subtitle" style={{ margin: 0, fontSize: '0.85rem' }}>

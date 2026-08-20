@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
+import ConfirmModal from '../components/ConfirmModal';
 import type { ILeave, ILeaveBalance, LeaveType } from '../types';
 import { 
   Send, 
   History, 
-  CheckCircle, 
-  XCircle, 
+  XCircle,
   PlusCircle
 } from 'lucide-react';
 import './LeaveManagement.css';
 
 const LeaveManagement: React.FC = () => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   
   // States
   const [leaves, setLeaves] = useState<ILeave[]>([]);
   const [balance, setBalance] = useState<ILeaveBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
   
   // Form states
   const [type, setType] = useState<LeaveType>('CASUAL');
@@ -27,7 +32,12 @@ const LeaveManagement: React.FC = () => {
   const [reason, setReason] = useState('');
   
   // UI states
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type);
+  };
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; isDestructive: boolean }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, isDestructive: true
+  });
   const [quotaError, setQuotaError] = useState<{
     location: string;
     monthlyQuota: number;
@@ -98,7 +108,6 @@ const LeaveManagement: React.FC = () => {
     }
 
     setSubmitLoading(true);
-    setMessage(null);
     setQuotaError(null);
     try {
       const res = await api.post('/leaves/apply', {
@@ -133,29 +142,33 @@ const LeaveManagement: React.FC = () => {
     }
   };
 
-  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
-
-  const handleCancelLeave = async (id: string) => {
-    if (!window.confirm('Are you sure you want to cancel this leave application?')) return;
-    
-    setCancelLoading(id);
-    setMessage(null);
-    try {
-      const res = await api.patch(`/leaves/${id}/cancel`);
-      setMessage({ 
-        text: res.data.message || 'Leave request successfully withdrawn.', 
-        type: 'success' 
-      });
-      fetchData();
-    } catch (err: any) {
-      console.error('Cancel leave error:', err);
-      setMessage({
-        text: err.response?.data?.message || 'Failed to withdraw leave request.',
-        type: 'error'
-      });
-    } finally {
-      setCancelLoading(null);
-    }
+  // Cancel leave handler
+  const handleCancelLeave = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Withdraw Request',
+      message: 'Are you sure you want to cancel this leave application?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setCancelLoading(id);
+        try {
+          const res = await api.delete(`/leaves/${id}`);
+          setMessage({ 
+            text: res.data.message || 'Leave request successfully withdrawn.', 
+            type: 'success' 
+          });
+          fetchData();
+        } catch (err: any) {
+          console.error('Withdraw error:', err);
+          setMessage({
+            text: err.response?.data?.message || 'Failed to withdraw leave request.',
+            type: 'error'
+          });
+        } finally {
+          setCancelLoading(null);
+        }
+      }
+    });
   };
 
   // Format date helper
@@ -183,7 +196,6 @@ const LeaveManagement: React.FC = () => {
           className="btn btn-primary"
           onClick={() => {
             setShowApplyForm(!showApplyForm);
-            setMessage(null);
             setQuotaError(null);
           }}
         >
@@ -192,12 +204,18 @@ const LeaveManagement: React.FC = () => {
         </button>
       </header>
 
-      {message && (
-        <div className={`leaves-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
-          {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-          <span>{message.text}</span>
-        </div>
-      )}
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDestructive={confirmModal.isDestructive}
+      />
 
       {quotaError && (
         <div className="leaves-alert alert-danger" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', marginTop: '0' }}>
@@ -340,7 +358,7 @@ const LeaveManagement: React.FC = () => {
           </div>
 
           {loading ? (
-            <p className="text-muted">Loading leave logs...</p>
+            <SkeletonLoader type="table" count={5} />
           ) : leaves.length > 0 ? (
             <div className="leave-logs-container">
               {/* Desktop Table View */}
@@ -465,7 +483,7 @@ const LeaveManagement: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-muted padding-2rem text-center">No leave applications recorded yet.</p>
+            <EmptyState title="No Leaves Recorded" description="No leave applications recorded yet." />
           )}
         </div>
       )}

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
+import ConfirmModal from '../components/ConfirmModal';
 import type { IUser, IRole, ISite } from '../types';
 import { 
-  CheckCircle, 
-  XCircle, 
   UserPlus, 
   Search, 
   Users, 
@@ -76,7 +78,18 @@ const EmployeeManagement: React.FC = () => {
   const [editDept, setEditDept] = useState('');
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
+  // We keep `setMessage` as a wrapper to avoid rewriting 30 lines
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) {
+      showToast(msg.text, msg.type);
+    }
+  };
+
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; isDestructive: boolean }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, isDestructive: true
+  });
+
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [modalSubmitting, setModalSubmitting] = useState(false);
 
@@ -362,22 +375,27 @@ const EmployeeManagement: React.FC = () => {
   };
 
   // Handle delete custom role
-  const handleDeleteRole = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this custom role? This will clear role assignments for related users.')) {
-      return;
-    }
-    setMessage(null);
-    setActionLoadingId(id);
-    try {
-      const res = await api.delete(`/roles/${id}`);
-      setMessage({ text: res.data.message || 'Custom role removed successfully.', type: 'success' });
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Delete role error:', err);
-      setMessage({ text: err.response?.data?.message || 'Failed to remove custom role.', type: 'error' });
-    } finally {
-      setActionLoadingId(null);
-    }
+  const handleDeleteRole = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Custom Role',
+      message: 'Are you sure you want to delete this custom role? This will clear role assignments for related users.',
+      isDestructive: true,
+      onConfirm: async () => {
+        setMessage(null);
+        setActionLoadingId(id);
+        try {
+          const res = await api.delete(`/roles/${id}`);
+          setMessage({ text: res.data.message || 'Custom role removed successfully.', type: 'success' });
+          fetchUsers();
+        } catch (err: any) {
+          console.error('Delete role error:', err);
+          setMessage({ text: err.response?.data?.message || 'Failed to remove custom role.', type: 'error' });
+        } finally {
+          setActionLoadingId(null);
+        }
+      }
+    });
   };
 
   // Handle Employee role update assignment
@@ -465,22 +483,27 @@ const EmployeeManagement: React.FC = () => {
   };
 
   // Registration rejection handler
-  const handleReject = async (id: string) => {
-    if (!window.confirm('Are you sure you want to reject this employee registration? This will permanently delete their account.')) {
-      return;
-    }
-    setMessage(null);
-    setActionLoadingId(id);
-    try {
-      const res = await api.delete(`/employees/${id}/reject`);
-      setMessage({ text: res.data.message || 'Registration request rejected and removed.', type: 'success' });
-      fetchUsers();
-    } catch (err: any) {
-      console.error('Rejection error:', err);
-      setMessage({ text: err.response?.data?.message || 'Failed to reject request.', type: 'error' });
-    } finally {
-      setActionLoadingId(null);
-    }
+  const handleReject = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Reject Registration',
+      message: 'Are you sure you want to reject this employee registration? This will permanently delete their account.',
+      isDestructive: true,
+      onConfirm: async () => {
+        setMessage(null);
+        setActionLoadingId(id);
+        try {
+          const res = await api.delete(`/employees/${id}/reject`);
+          setMessage({ text: res.data.message || 'Registration request rejected and removed.', type: 'success' });
+          fetchUsers();
+        } catch (err: any) {
+          console.error('Rejection error:', err);
+          setMessage({ text: err.response?.data?.message || 'Failed to reject request.', type: 'error' });
+        } finally {
+          setActionLoadingId(null);
+        }
+      }
+    });
   };
 
   // Toggle Account Active status (Employee)
@@ -575,12 +598,18 @@ const EmployeeManagement: React.FC = () => {
         )}
       </header>
 
-      {message && (
-        <div className={`employee-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
-          {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-          <span>{message.text}</span>
-        </div>
-      )}
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDestructive={confirmModal.isDestructive}
+      />
 
       {/* Database Listing Panel */}
       <div className="employee-list-section glass-card">
@@ -650,10 +679,7 @@ const EmployeeManagement: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="table-loading">
-            <div className="custom-spinner" />
-            <p>SYNCING DATABASE REGISTERS...</p>
-          </div>
+          <SkeletonLoader type="table" count={5} />
         ) : activeTab === 'admins' ? (
           /* Administrators View */
           filteredAdmins.length > 0 ? (
@@ -785,7 +811,10 @@ const EmployeeManagement: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-muted padding-2rem text-center">No matching administrators found.</p>
+            <EmptyState 
+              title="No Administrators Found" 
+              description="There are no active administrators matching your search criteria." 
+            />
           )
         ) : activeTab === 'roles' ? (
           /* Custom Roles View */
@@ -1048,9 +1077,10 @@ const EmployeeManagement: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-muted padding-2rem text-center">
-              {searchQuery ? 'No matching employee records found.' : `No employee records found.`}
-            </p>
+            <EmptyState 
+              title="No Employees Found" 
+              description={searchQuery ? "No matching employee records found." : "No employee records found."} 
+            />
           )
         )}
       </div>

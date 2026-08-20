@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { 
   Users, 
   CalendarDays, 
-  AlertTriangle, 
+  AlertTriangle,
   Clock, 
   Calendar, 
   ChevronRight,
@@ -112,9 +113,8 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       {loading ? (
-        <div className="loader-container">
-          <div className="custom-spinner" />
-          <p>FETCHING CORE METRICS...</p>
+        <div className="metrics-grid">
+          <SkeletonLoader type="card" count={4} />
         </div>
       ) : (
         <>

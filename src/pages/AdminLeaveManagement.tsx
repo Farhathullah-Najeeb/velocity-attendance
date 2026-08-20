@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
 import type { ILeave } from '../types';
 import { 
-  CheckCircle, 
-  XCircle, 
   Clock, 
   Filter, 
   MessageSquare,
@@ -29,7 +30,10 @@ const AdminLeaveManagement: React.FC = () => {
   const [remarks, setRemarks] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
+  const setMessage = (msg: { text: string; type: 'success' | 'error' | 'info' } | null) => {
+    if (msg) showToast(msg.text, msg.type);
+  };
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -90,7 +94,6 @@ const AdminLeaveManagement: React.FC = () => {
 
     setActionLoading(true);
     setModalError(null);
-    setMessage(null);
 
     try {
       const endpoint = `/leaves/${selectedLeave._id}/${modalAction}`;
@@ -141,13 +144,6 @@ const AdminLeaveManagement: React.FC = () => {
         </div>
       </header>
 
-      {message && (
-        <div className={`leave-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
-          {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
-          <span>{message.text}</span>
-        </div>
-      )}
-
       {/* Control Panel: Filters & Search */}
       <div className="control-panel glass-card">
         <div className="search-box flex-1">
@@ -193,12 +189,9 @@ const AdminLeaveManagement: React.FC = () => {
       </div>
 
       {/* Leaves Applications Table / List */}
-      <div className="leave-logs-section glass-card">
+      <div className="admin-leave-table-card glass-card">
         {loading ? (
-          <div className="table-loading-leaves">
-            <div className="custom-spinner" />
-            <p>SYNCING LEAVE APPLICATIONS...</p>
-          </div>
+          <SkeletonLoader type="table" count={5} />
         ) : filteredLeaves.length > 0 ? (
           <div className="leave-logs-container">
             {/* Desktop Table View */}
@@ -394,7 +387,10 @@ const AdminLeaveManagement: React.FC = () => {
             </div>
           </div>
         ) : (
-          <p className="text-muted padding-2rem text-center">No leave applications match the selected criteria.</p>
+          <EmptyState 
+            title="No Leave Applications" 
+            description="No leave applications match the selected criteria." 
+          />
         )}
       </div>
 
