@@ -38,7 +38,9 @@ interface ReportResponse {
 const AdminReports: React.FC = () => {
   const [employees, setEmployees] = useState<IUser[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [reportRange, setReportRange] = useState<'weekly' | 'monthly'>('monthly');
+  const [reportRange, setReportRange] = useState<'weekly' | 'monthly' | 'custom'>('monthly');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   
@@ -62,19 +64,31 @@ const AdminReports: React.FC = () => {
     setLoading(true);
     setMessage(null);
     try {
-      const endpoint = reportRange === 'weekly' ? '/attendance/weekly-report' : '/attendance/monthly-report';
+      let endpoint = '/attendance/monthly-report';
       const params: Record<string, string> = {};
       if (selectedEmployee) params.employeeId = selectedEmployee;
 
+      if (reportRange === 'weekly') {
+        endpoint = '/attendance/weekly-report';
+      } else if (reportRange === 'custom') {
+        if (!customStartDate || !customEndDate) {
+          setLoading(false);
+          return;
+        }
+        endpoint = '/attendance/custom-report';
+        params.startDate = customStartDate;
+        params.endDate = customEndDate;
+      }
+
       const res = await api.get<ReportResponse>(endpoint, { params });
-      setReportData(res.data.reports);
+      setReportData(res.data.reports || []);
       setDateRange({
-        start: res.data.startDate,
-        end: res.data.endDate
+        start: res.data.startDate || customStartDate,
+        end: res.data.endDate || customEndDate
       });
     } catch (err: any) {
       console.error('Error fetching report:', err);
-      setMessage({ text: 'Failed to retrieve attendance report logs.', type: 'error' });
+      setMessage({ text: err.response?.data?.message || 'Failed to retrieve attendance report logs.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -85,20 +99,34 @@ const AdminReports: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchReport();
-  }, [reportRange, selectedEmployee]);
+    if (reportRange !== 'custom' || (customStartDate && customEndDate)) {
+      fetchReport();
+    }
+  }, [reportRange, selectedEmployee, customStartDate, customEndDate]);
 
   // Handle Export Report (PDF or Excel)
   const handleExport = async (format: 'excel' | 'pdf') => {
     setExportLoading(format);
     setMessage(null);
     try {
+      const params: Record<string, string> = {
+        format,
+        range: reportRange,
+        employeeId: selectedEmployee || ''
+      };
+
+      if (reportRange === 'custom') {
+        if (!customStartDate || !customEndDate) {
+          setMessage({ text: 'Please select both Custom Start Date and End Date before exporting.', type: 'error' });
+          setExportLoading(null);
+          return;
+        }
+        params.startDate = customStartDate;
+        params.endDate = customEndDate;
+      }
+
       const res = await api.get('/attendance/report/export', {
-        params: {
-          format,
-          range: reportRange,
-          employeeId: selectedEmployee || undefined
-        },
+        params,
         responseType: 'blob'
       });
 
@@ -110,7 +138,7 @@ const AdminReports: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       
       const fileExtension = format === 'excel' ? 'xlsx' : 'pdf';
-      const fileName = `attendance_${reportRange}_report_${dateRange.start}_to_${dateRange.end}.${fileExtension}`;
+      const fileName = `attendance_${reportRange}_report_${dateRange.start || 'export'}_${dateRange.end || 'export'}.${fileExtension}`;
       
       const link = document.createElement('a');
       link.href = url;
@@ -172,7 +200,36 @@ const AdminReports: React.FC = () => {
           >
             Monthly Summary (30 days)
           </button>
+          <button 
+            className={`time-toggle-btn ${reportRange === 'custom' ? 'active' : ''}`}
+            onClick={() => setReportRange('custom')}
+          >
+            Custom Range
+          </button>
         </div>
+
+        {reportRange === 'custom' && (
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', margin: '0.5rem 0' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start Date: </label>
+              <input
+                type="date"
+                className="form-input"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>End Date: </label>
+              <input
+                type="date"
+                className="form-input"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Filter Selection */}
         <div className="filters-group-row">

@@ -9,7 +9,8 @@ import {
   MessageSquare,
   Search,
   Check,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
 import './AdminLeaveManagement.css';
 
@@ -24,7 +25,7 @@ const AdminLeaveManagement: React.FC = () => {
 
   // Remarks modal states
   const [selectedLeave, setSelectedLeave] = useState<ILeave | null>(null);
-  const [modalAction, setModalAction] = useState<'approve' | 'reject' | null>(null);
+  const [modalAction, setModalAction] = useState<'approve' | 'reject' | 'revoke' | null>(null);
   const [remarks, setRemarks] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -61,10 +62,8 @@ const AdminLeaveManagement: React.FC = () => {
     return () => { document.body.classList.remove('modal-open'); };
   }, [selectedLeave]);
 
-
-
   // Open modal handler
-  const openActionModal = (leave: ILeave, action: 'approve' | 'reject') => {
+  const openActionModal = (leave: ILeave, action: 'approve' | 'reject' | 'revoke') => {
     setSelectedLeave(leave);
     setModalAction(action);
     setRemarks('');
@@ -79,13 +78,13 @@ const AdminLeaveManagement: React.FC = () => {
     setModalError(null);
   };
 
-  // Submit approval/rejection handler
+  // Submit approval/rejection/revoke handler
   const handleProcessLeave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLeave || !modalAction) return;
 
-    if (modalAction === 'reject' && !remarks.trim()) {
-      setModalError('Remarks are required for rejecting a leave request.');
+    if ((modalAction === 'reject' || modalAction === 'revoke') && !remarks.trim()) {
+      setModalError(`Remarks are required for ${modalAction}ing a leave request.`);
       return;
     }
 
@@ -98,14 +97,14 @@ const AdminLeaveManagement: React.FC = () => {
       const res = await api.patch(endpoint, { remarks: remarks.trim() });
       
       setMessage({ 
-        text: res.data.message || `Leave request successfully ${modalAction}d.`, 
+        text: res.data.message || `Leave request ${modalAction}d successfully.`, 
         type: 'success' 
       });
       closeModal();
       fetchLeaves();
     } catch (err: any) {
       console.error('Leave process error:', err);
-      setModalError(err.response?.data?.message || `Failed to process ${modalAction} request.`);
+      setModalError(err.response?.data?.message || `Failed to ${modalAction} leave request.`);
     } finally {
       setActionLoading(false);
     }
@@ -120,101 +119,97 @@ const AdminLeaveManagement: React.FC = () => {
   };
 
   const calculateDays = (from: string, to: string) => {
-    const start = new Date(from);
-    const end = new Date(to);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const d1 = new Date(from);
+    const d2 = new Date(to);
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
-  // Filter leaves locally by employee name search
-  const filteredLeaves = leaves.filter(leave => {
-    const emp = leave.employeeId as any;
-    if (!emp) return false;
-    const nameMatch = emp.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const emailMatch = emp.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    return nameMatch || emailMatch;
+  const filteredLeaves = leaves.filter(l => {
+    const empName = (l.employeeId as any)?.name || '';
+    const empEmail = (l.employeeId as any)?.email || '';
+    const q = searchQuery.toLowerCase();
+    return empName.toLowerCase().includes(q) || empEmail.toLowerCase().includes(q) || l.reason.toLowerCase().includes(q);
   });
 
   return (
-    <div className="admin-leaves-container fade-in">
-      <header className="leaves-header-admin">
+    <div className="admin-leave-management-container fade-in">
+      <header className="leave-header">
         <div>
-          <h1>Leave Request Moderation</h1>
-          <p className="subtitle">Monitor employee leave requests and process approvals or rejections.</p>
+          <h1>Leave Management Hub</h1>
+          <p className="subtitle">Review, approve, reject, or revoke employee leave applications across departments.</p>
         </div>
       </header>
 
       {message && (
-        <div className={`leaves-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
+        <div className={`leave-alert alert-${message.type === 'success' ? 'success' : 'danger'}`}>
           {message.type === 'success' ? <CheckCircle size={20} /> : <XCircle size={20} />}
           <span>{message.text}</span>
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="filter-controls-bar glass-card">
-        <div className="search-group">
-          <Search className="search-icon" size={16} />
+      {/* Control Panel: Filters & Search */}
+      <div className="control-panel glass-card">
+        <div className="search-box flex-1">
+          <Search size={18} className="search-icon" />
           <input 
             type="text" 
-            placeholder="Search by employee name..." 
-            className="search-input"
+            placeholder="Search by employee name, email, or reason..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
           />
         </div>
 
-        <div className="filters-row">
+        <div className="filters-group">
           <div className="filter-item">
-            <Filter size={14} className="filter-decor" />
+            <Filter size={16} className="filter-icon" />
             <select 
-              className="filter-select"
-              value={statusFilter}
+              value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
             >
-              <option value="PENDING">Pending Review</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
               <option value="">All Statuses</option>
+              <option value="PENDING">Pending Only</option>
+              <option value="APPROVED">Approved Only</option>
+              <option value="REJECTED">Rejected Only</option>
             </select>
           </div>
 
           <div className="filter-item">
-            <Filter size={14} className="filter-decor" />
             <select 
-              className="filter-select"
-              value={typeFilter}
+              value={typeFilter} 
               onChange={(e) => setTypeFilter(e.target.value)}
+              className="filter-select"
             >
               <option value="">All Leave Types</option>
               <option value="CASUAL">Casual Leave</option>
               <option value="SICK">Sick Leave</option>
               <option value="COMPENSATORY">Compensatory Off</option>
-              <option value="OTHER">Other Special</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Leaves Logs Table */}
-      <div className="leaves-list-section glass-card">
+      {/* Leaves Applications Table / List */}
+      <div className="leave-logs-section glass-card">
         {loading ? (
-          <div className="table-loading-admin">
+          <div className="table-loading-leaves">
             <div className="custom-spinner" />
-            <p>SYNCING LEAVE BALANCE FILES...</p>
+            <p>SYNCING LEAVE APPLICATIONS...</p>
           </div>
         ) : filteredLeaves.length > 0 ? (
           <div className="leave-logs-container">
             {/* Desktop Table View */}
             <div className="table-responsive hide-on-mobile">
-              <table className="admin-leave-table">
+              <table className="leaves-table">
                 <thead>
                   <tr>
                     <th>Employee</th>
                     <th>Department</th>
                     <th>Leave Type</th>
                     <th>Duration</th>
-                    <th className="center-cell">Days</th>
                     <th>Reason</th>
                     <th>Status</th>
                     <th className="center-cell">Actions</th>
@@ -233,11 +228,11 @@ const AdminLeaveManagement: React.FC = () => {
                               <span className="emp-email">{emp.email}</span>
                             </div>
                           ) : (
-                            <span className="text-muted">Unknown Employee</span>
+                            'Unknown'
                           )}
                         </td>
                         <td>
-                          <span className="dept-tag">{emp?.department || '—'}</span>
+                          <span className="badge badge-neutral">{emp?.department || 'N/A'}</span>
                         </td>
                         <td>
                           <span className={`leave-type-indicator type-${leave.type.toLowerCase()}`}>
@@ -245,12 +240,16 @@ const AdminLeaveManagement: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          <span className="date-range">
-                            {formatDate(leave.fromDate)} to {formatDate(leave.toDate)}
-                          </span>
+                          <div className="duration-cell">
+                            <strong>{formatDate(leave.fromDate)}</strong>
+                            <span className="to-arrow">→</span>
+                            <strong>{formatDate(leave.toDate)}</strong>
+                            <span className="days-cnt">({days} {days === 1 ? 'day' : 'days'})</span>
+                          </div>
                         </td>
-                        <td className="center-cell">{days}</td>
-                        <td className="reason-cell" title={leave.reason}>{leave.reason}</td>
+                        <td>
+                          <span className="reason-text" title={leave.reason}>{leave.reason}</span>
+                        </td>
                         <td>
                           <span className={`badge badge-${
                             leave.status === 'APPROVED' ? 'success' : 
@@ -259,9 +258,9 @@ const AdminLeaveManagement: React.FC = () => {
                             {leave.status}
                           </span>
                         </td>
-                        <td className="center-cell actions-cell">
+                        <td>
                           {leave.status === 'PENDING' ? (
-                            <div className="btn-action-group">
+                            <div className="action-buttons-cell">
                               <button 
                                 className="btn-action approve"
                                 onClick={() => openActionModal(leave, 'approve')}
@@ -273,6 +272,16 @@ const AdminLeaveManagement: React.FC = () => {
                                 onClick={() => openActionModal(leave, 'reject')}
                               >
                                 Reject
+                              </button>
+                            </div>
+                          ) : leave.status === 'APPROVED' ? (
+                            <div className="action-buttons-cell">
+                              <button 
+                                className="btn-action reject"
+                                title="Revoke Approved Leave"
+                                onClick={() => openActionModal(leave, 'revoke')}
+                              >
+                                <RotateCcw size={12} className="inline-icon" /> Revoke
                               </button>
                             </div>
                           ) : (
@@ -351,7 +360,7 @@ const AdminLeaveManagement: React.FC = () => {
                       )}
                     </div>
                     
-                    {leave.status === 'PENDING' && (
+                    {leave.status === 'PENDING' ? (
                       <div className="card-row-actions gap-05rem">
                         <button 
                           className="btn btn-success flex-1"
@@ -368,7 +377,17 @@ const AdminLeaveManagement: React.FC = () => {
                           <span>Reject</span>
                         </button>
                       </div>
-                    )}
+                    ) : leave.status === 'APPROVED' ? (
+                      <div className="card-row-actions gap-05rem">
+                        <button 
+                          className="btn btn-danger flex-1"
+                          onClick={() => openActionModal(leave, 'revoke')}
+                        >
+                          <RotateCcw size={14} />
+                          <span>Revoke Leave</span>
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -379,12 +398,12 @@ const AdminLeaveManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Approve/Reject Modal Popup */}
+      {/* Approve/Reject/Revoke Modal Popup */}
       {selectedLeave && modalAction && (
         <div className="modal-backdrop">
           <div className="modal-box glass-card fade-in">
             <div className="modal-header">
-              <h3>{modalAction === 'approve' ? 'Approve Leave Request' : 'Reject Leave Request'}</h3>
+              <h3>{modalAction === 'approve' ? 'Approve Leave Request' : modalAction === 'reject' ? 'Reject Leave Request' : 'Revoke Approved Leave'}</h3>
               <button className="modal-close-btn" onClick={closeModal}>&times;</button>
             </div>
             
@@ -405,14 +424,14 @@ const AdminLeaveManagement: React.FC = () => {
 
                 <div className="form-group">
                   <label className="form-label">
-                    Remarks {modalAction === 'reject' && <span className="required-star">*</span>}
+                    Remarks {(modalAction === 'reject' || modalAction === 'revoke') && <span className="required-star">*</span>}
                   </label>
                   <textarea 
                     className="form-textarea modal-textarea" 
-                    placeholder={modalAction === 'approve' ? 'Enter optional approval comments...' : 'Please specify the reason for rejection...'}
+                    placeholder={modalAction === 'approve' ? 'Enter optional approval comments...' : modalAction === 'revoke' ? 'Specify reasoning for revoking this approved leave...' : 'Please specify the reason for rejection...'}
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    required={modalAction === 'reject'}
+                    required={modalAction === 'reject' || modalAction === 'revoke'}
                   />
                 </div>
               </div>
@@ -426,7 +445,7 @@ const AdminLeaveManagement: React.FC = () => {
                   className={`btn ${modalAction === 'approve' ? 'btn-primary' : 'btn-danger'}`}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Saving...' : modalAction === 'approve' ? 'Approve Request' : 'Reject Request'}
+                  {actionLoading ? 'Saving...' : modalAction === 'approve' ? 'Approve Request' : modalAction === 'revoke' ? 'Revoke Leave' : 'Reject Request'}
                 </button>
               </div>
             </form>

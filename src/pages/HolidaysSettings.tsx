@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import type { ISettings, IHoliday } from '../types';
+import type { ISettings, IHoliday, ILocationPolicy, ISite } from '../types';
 import { 
   CheckCircle, 
   XCircle, 
@@ -10,16 +10,20 @@ import {
   CalendarPlus,
   Trash2,
   MapPin,
-  Plus
+  Plus,
+  Edit2
 } from 'lucide-react';
 import './HolidaysSettings.css';
-import type { ILocationPolicy } from '../types';
 
 const HolidaysSettings: React.FC = () => {
   // Settings States
   const [officeStartTime, setOfficeStartTime] = useState('09:00');
   const [officeEndTime, setOfficeEndTime] = useState('18:00');
   const [gracePeriod, setGracePeriod] = useState(15);
+  const [officeLat, setOfficeLat] = useState<number | ''>('');
+  const [officeLng, setOfficeLng] = useState<number | ''>('');
+  const [allowedRadius, setAllowedRadius] = useState<number>(200);
+  const [geofencingEnabled, setGeofencingEnabled] = useState<boolean>(true);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
 
@@ -29,6 +33,18 @@ const HolidaysSettings: React.FC = () => {
   const [holidayDate, setHolidayDate] = useState('');
   const [holidayName, setHolidayName] = useState('');
   const [addHolidayLoading, setAddHolidayLoading] = useState(false);
+
+  // Work Sites States
+  const [sites, setSites] = useState<ISite[]>([]);
+  const [loadingSites, setLoadingSites] = useState(true);
+  const [showSiteModal, setShowSiteModal] = useState(false);
+  const [editingSite, setEditingSite] = useState<ISite | null>(null);
+  const [siteName, setSiteName] = useState('');
+  const [siteLat, setSiteLat] = useState<number | ''>('');
+  const [siteLng, setSiteLng] = useState<number | ''>('');
+  const [siteRadius, setSiteRadius] = useState<number>(500);
+  const [siteAddress, setSiteAddress] = useState('');
+  const [siteSaving, setSiteSaving] = useState(false);
 
   // Alerts
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -46,6 +62,10 @@ const HolidaysSettings: React.FC = () => {
         setOfficeStartTime(res.data.officeStartTime);
         setOfficeEndTime(res.data.officeEndTime);
         setGracePeriod(res.data.gracePeriod);
+        if (res.data.officeLatitude !== undefined) setOfficeLat(res.data.officeLatitude);
+        if (res.data.officeLongitude !== undefined) setOfficeLng(res.data.officeLongitude);
+        if (res.data.allowedRadiusMeters) setAllowedRadius(res.data.allowedRadiusMeters);
+        if (res.data.geofencingEnabled !== undefined) setGeofencingEnabled(res.data.geofencingEnabled);
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
@@ -69,8 +89,8 @@ const HolidaysSettings: React.FC = () => {
   const fetchLocationPolicies = async () => {
     setLoadingPolicies(true);
     try {
-      const res = await api.get<{ policies: ILocationPolicy[] }>('/settings/location-policies');
-      setLocationPolicies(res.data.policies || []);
+      const res = await api.get<ILocationPolicy[]>('/settings/location-leave-policies');
+      setLocationPolicies(res.data || []);
     } catch (err) {
       console.error('Error fetching location policies:', err);
     } finally {
@@ -78,10 +98,23 @@ const HolidaysSettings: React.FC = () => {
     }
   };
 
+  const fetchSites = async () => {
+    setLoadingSites(true);
+    try {
+      const res = await api.get<ISite[]>('/sites');
+      setSites(res.data || []);
+    } catch (err) {
+      console.error('Error fetching sites:', err);
+    } finally {
+      setLoadingSites(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
     fetchHolidays();
     fetchLocationPolicies();
+    fetchSites();
   }, []);
 
   // Update Settings Handler
@@ -93,7 +126,11 @@ const HolidaysSettings: React.FC = () => {
       await api.patch('/settings', {
         officeStartTime,
         officeEndTime,
-        gracePeriod: Number(gracePeriod)
+        gracePeriod: Number(gracePeriod),
+        officeLatitude: officeLat !== '' ? Number(officeLat) : undefined,
+        officeLongitude: officeLng !== '' ? Number(officeLng) : undefined,
+        allowedRadiusMeters: Number(allowedRadius),
+        geofencingEnabled
       });
       setMessage({ text: 'Office policy configurations updated successfully.', type: 'success' });
     } catch (err: any) {
@@ -102,6 +139,20 @@ const HolidaysSettings: React.FC = () => {
     } finally {
       setSaveLoading(false);
     }
+  };
+
+  const handleGetLocationForOffice = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setOfficeLat(pos.coords.latitude);
+      setOfficeLng(pos.coords.longitude);
+      setMessage({ text: 'Current GPS location set as Main Office coordinates.', type: 'success' });
+    }, (err) => {
+      alert('Could not retrieve location: ' + err.message);
+    });
   };
 
   // Add Holiday Handler
@@ -153,6 +204,114 @@ const HolidaysSettings: React.FC = () => {
     }
   };
 
+  // Location Policies Handlers
+  const handlePolicyChange = (index: number, field: keyof ILocationPolicy, value: any) => {
+    const updated = [...locationPolicies];
+    updated[index] = { ...updated[index], [field]: value };
+    setLocationPolicies(updated);
+  };
+
+  const addPolicy = () => {
+    setLocationPolicies([...locationPolicies, { location: '', monthlyPaidLeaveQuota: 1, annualPaidLeaveQuota: 12 }]);
+  };
+
+  const removePolicy = (index: number) => {
+    const updated = locationPolicies.filter((_, i) => i !== index);
+    setLocationPolicies(updated);
+  };
+
+  const handleUpdatePolicies = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavePoliciesLoading(true);
+    setMessage(null);
+    try {
+      for (const pol of locationPolicies) {
+        if (pol.location.trim()) {
+          await api.put('/settings/location-leave-policies', {
+            location: pol.location.trim().toUpperCase(),
+            monthlyPaidLeaveQuota: Number(pol.monthlyPaidLeaveQuota)
+          });
+        }
+      }
+      setMessage({ text: 'Location leave policies saved successfully.', type: 'success' });
+      fetchLocationPolicies();
+    } catch (err: any) {
+      console.error('Save location policies error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to save location policies.', type: 'error' });
+    } finally {
+      setSavePoliciesLoading(false);
+    }
+  };
+
+  // Work Sites Handlers
+  const openCreateSiteModal = () => {
+    setEditingSite(null);
+    setSiteName('');
+    setSiteLat('');
+    setSiteLng('');
+    setSiteRadius(500);
+    setSiteAddress('');
+    setShowSiteModal(true);
+  };
+
+  const openEditSiteModal = (site: ISite) => {
+    setEditingSite(site);
+    setSiteName(site.name);
+    setSiteLat(site.latitude);
+    setSiteLng(site.longitude);
+    setSiteRadius(site.radiusMeters || 500);
+    setSiteAddress(site.address || '');
+    setShowSiteModal(true);
+  };
+
+  const handleSaveSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!siteName || siteLat === '' || siteLng === '') {
+      setMessage({ text: 'Please fill in site name, latitude, and longitude.', type: 'error' });
+      return;
+    }
+
+    setSiteSaving(true);
+    setMessage(null);
+    try {
+      const payload = {
+        name: siteName.trim(),
+        latitude: Number(siteLat),
+        longitude: Number(siteLng),
+        radiusMeters: Number(siteRadius),
+        address: siteAddress.trim()
+      };
+
+      if (editingSite) {
+        await api.patch(`/sites/${editingSite._id}`, payload);
+        setMessage({ text: 'Work site updated successfully.', type: 'success' });
+      } else {
+        await api.post('/sites', payload);
+        setMessage({ text: 'Work site created successfully.', type: 'success' });
+      }
+
+      setShowSiteModal(false);
+      fetchSites();
+    } catch (err: any) {
+      console.error('Save site error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to save work site.', type: 'error' });
+    } finally {
+      setSiteSaving(false);
+    }
+  };
+
+  const handleDeleteSite = async (siteId: string) => {
+    if (!window.confirm('Are you sure you want to delete this work site location?')) return;
+    try {
+      await api.delete(`/sites/${siteId}`);
+      setMessage({ text: 'Work site deleted successfully.', type: 'success' });
+      fetchSites();
+    } catch (err: any) {
+      console.error('Delete site error:', err);
+      setMessage({ text: err.response?.data?.message || 'Failed to delete site.', type: 'error' });
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(undefined, { 
       year: 'numeric', 
@@ -161,44 +320,12 @@ const HolidaysSettings: React.FC = () => {
     });
   };
 
-  // Update Location Policies Handler
-  const handleUpdatePolicies = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavePoliciesLoading(true);
-    setMessage(null);
-    try {
-      await api.put('/settings/location-policies', {
-        policies: locationPolicies
-      });
-      setMessage({ text: 'Location policies updated successfully.', type: 'success' });
-    } catch (err: any) {
-      console.error('Update policies error:', err);
-      setMessage({ text: err.response?.data?.message || 'Failed to update location policies.', type: 'error' });
-    } finally {
-      setSavePoliciesLoading(false);
-    }
-  };
-
-  const handlePolicyChange = (index: number, field: keyof ILocationPolicy, value: any) => {
-    const updated = [...locationPolicies];
-    updated[index] = { ...updated[index], [field]: value };
-    setLocationPolicies(updated);
-  };
-
-  const addPolicy = () => {
-    setLocationPolicies([...locationPolicies, { location: '', monthlyPaidLeaveQuota: 1 }]);
-  };
-
-  const removePolicy = (index: number) => {
-    setLocationPolicies(locationPolicies.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="holidays-settings-container fade-in">
-      <header className="page-header-admin">
+      <header className="settings-header">
         <div>
-          <h1>Holidays & Settings</h1>
-          <p className="subtitle">Configure corporate office policies, check-in timings, grace intervals and company holidays.</p>
+          <h1>System Configuration Hub</h1>
+          <p className="subtitle">Configure company office hours, location leave quotas, work site locations, and calendar holidays.</p>
         </div>
       </header>
 
@@ -209,18 +336,18 @@ const HolidaysSettings: React.FC = () => {
         </div>
       )}
 
-      <div className="settings-split-grid">
-        {/* Left Card: Office Timings Configurations */}
+      {/* Grid Layout for Configuration Panels */}
+      <div className="settings-grid-layout">
+        {/* Left Card: Office Timings & Policy Settings */}
         <section className="settings-panel-card glass-card">
           <div className="panel-header">
             <Clock size={20} className="panel-header-icon color-blue" />
-            <h3>Office Hour Policy Settings</h3>
+            <h3>Office Hours & Attendance Policies</h3>
           </div>
 
           {loadingSettings ? (
             <div className="panel-loading">
               <div className="custom-spinner" />
-              <p>LOADING CONFIGURATIONS...</p>
             </div>
           ) : (
             <form onSubmit={handleUpdateSettings} className="settings-form">
@@ -233,7 +360,7 @@ const HolidaysSettings: React.FC = () => {
                   onChange={(e) => setOfficeStartTime(e.target.value)}
                   required
                 />
-                <span className="input-helper-text">Timings after which employees are flagged as Late arrivals.</span>
+                <span className="input-helper-text">Official shift start time. Check-ins after this will be marked late.</span>
               </div>
 
               <div className="form-group">
@@ -260,6 +387,57 @@ const HolidaysSettings: React.FC = () => {
                   required
                 />
                 <span className="input-helper-text">Acceptable checking window extension beyond start hours (in minutes).</span>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="form-label"><strong>Main Office Geofencing Radius (Meters)</strong></label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={geofencingEnabled} 
+                      onChange={(e) => setGeofencingEnabled(e.target.checked)} 
+                    />
+                    Enable Geofence
+                  </label>
+                </div>
+                <input 
+                  type="number" 
+                  className="form-input"
+                  min="10"
+                  max="10000"
+                  value={allowedRadius}
+                  onChange={(e) => setAllowedRadius(Number(e.target.value))}
+                  required
+                />
+                <span className="input-helper-text">Maximum allowed radius distance (in meters) for check-in validation.</span>
+              </div>
+
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                  <label className="form-label">Office Coordinates (Lat, Lng)</label>
+                  <button type="button" className="btn btn-secondary" onClick={handleGetLocationForOffice} style={{ padding: '2px 8px', fontSize: '0.75rem' }}>
+                    <MapPin size={12} /> Use My Current GPS
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <input 
+                    type="number" 
+                    step="any"
+                    className="form-input"
+                    placeholder="Latitude"
+                    value={officeLat}
+                    onChange={(e) => setOfficeLat(e.target.value ? Number(e.target.value) : '')}
+                  />
+                  <input 
+                    type="number" 
+                    step="any"
+                    className="form-input"
+                    placeholder="Longitude"
+                    value={officeLng}
+                    onChange={(e) => setOfficeLng(e.target.value ? Number(e.target.value) : '')}
+                  />
+                </div>
               </div>
 
               <button 
@@ -361,11 +539,52 @@ const HolidaysSettings: React.FC = () => {
         </section>
       </div>
 
+      {/* Work Sites Section */}
+      <section className="settings-panel-card glass-card" style={{ marginTop: '1rem' }}>
+        <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <MapPin size={20} className="panel-header-icon color-cyan" />
+            <h3>Work Site Locations (Geofencing)</h3>
+          </div>
+          <button className="btn btn-primary" onClick={openCreateSiteModal}>
+            <Plus size={16} /> Add Work Site
+          </button>
+        </div>
+
+        {loadingSites ? (
+          <div className="panel-loading">
+            <div className="custom-spinner" />
+          </div>
+        ) : sites.length > 0 ? (
+          <div className="holidays-grid-view" style={{ marginTop: '1rem' }}>
+            {sites.map(site => (
+              <div key={site._id} className="holiday-row-item">
+                <div className="holiday-desc-text flex-grow-1">
+                  <h5>{site.name}</h5>
+                  <p>Lat: {site.latitude}, Lng: {site.longitude} | Radius: {site.radiusMeters || 500}m</p>
+                  {site.address && <p className="text-muted">{site.address}</p>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn-delete-holiday" onClick={() => openEditSiteModal(site)}>
+                    <Edit2 size={16} />
+                  </button>
+                  <button className="btn-delete-holiday" onClick={() => handleDeleteSite(site._id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted text-center padding-1rem">No work site locations configured yet.</p>
+        )}
+      </section>
+
       {/* Location Policies Section */}
       <section className="settings-panel-card glass-card" style={{ marginTop: '1rem' }}>
         <div className="panel-header">
           <MapPin size={20} className="panel-header-icon color-cyan" />
-          <h3>Location-based Leave Policies</h3>
+          <h3>Location-based Leave Quota Policies</h3>
         </div>
         
         {loadingPolicies ? (
@@ -387,7 +606,7 @@ const HolidaysSettings: React.FC = () => {
                     <input 
                       type="text" 
                       className="form-input"
-                      placeholder="e.g. Kerala"
+                      placeholder="e.g. KERALA"
                       value={policy.location}
                       onChange={(e) => handlePolicyChange(index, 'location', e.target.value)}
                       required
@@ -431,6 +650,50 @@ const HolidaysSettings: React.FC = () => {
           </form>
         )}
       </section>
+
+      {/* Work Site Modal */}
+      {showSiteModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box glass-card fade-in">
+            <div className="modal-header">
+              <h3>{editingSite ? 'Edit Work Site' : 'Create Work Site'}</h3>
+              <button className="modal-close-btn" onClick={() => setShowSiteModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleSaveSite}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Site Name <span className="required-star">*</span></label>
+                  <input type="text" className="form-input" value={siteName} onChange={(e) => setSiteName(e.target.value)} required />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Latitude <span className="required-star">*</span></label>
+                    <input type="number" step="any" className="form-input" value={siteLat} onChange={(e) => setSiteLat(e.target.value ? Number(e.target.value) : '')} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Longitude <span className="required-star">*</span></label>
+                    <input type="number" step="any" className="form-input" value={siteLng} onChange={(e) => setSiteLng(e.target.value ? Number(e.target.value) : '')} required />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Allowed Radius (Meters)</label>
+                  <input type="number" className="form-input" value={siteRadius} onChange={(e) => setSiteRadius(Number(e.target.value))} min="50" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Site Address</label>
+                  <textarea className="form-textarea" value={siteAddress} onChange={(e) => setSiteAddress(e.target.value)} />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowSiteModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={siteSaving}>
+                  {siteSaving ? 'Saving...' : 'Save Site'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

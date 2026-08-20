@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import type { IUser, IRole } from '../types';
+import type { IUser, IRole, ISite } from '../types';
 import { 
   CheckCircle, 
   XCircle, 
@@ -53,6 +53,8 @@ const EmployeeManagement: React.FC = () => {
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<IUser | null>(null);
+  const [sites, setSites] = useState<ISite[]>([]);
+  const [editSiteId, setEditSiteId] = useState<string>('');
 
   // Direct Create Employee Form
   const [empName, setEmpName] = useState('');
@@ -97,6 +99,7 @@ const EmployeeManagement: React.FC = () => {
           params: { status }
         });
         setEmployees(res.data);
+      api.get<ISite[]>('/sites').then(r => setSites(r.data || [])).catch(() => {});
       }
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -1178,6 +1181,20 @@ const EmployeeManagement: React.FC = () => {
                   />
                   {editErrors.department && <span className="validation-error">{editErrors.department}</span>}
                 </div>
+
+                  <div className="form-group margin-top-1rem">
+                    <label className="form-label">Assigned Work Site Location</label>
+                    <select
+                      className="form-input"
+                      value={editSiteId}
+                      onChange={(e) => setEditSiteId(e.target.value)}
+                    >
+                      <option value="">Main Office (Default)</option>
+                      {sites.map(s => (
+                        <option key={s._id} value={s._id}>{s.name} ({s.address || 'Geofenced'})</option>
+                      ))}
+                    </select>
+                  </div>
               </div>
 
               <div className="modal-footer">

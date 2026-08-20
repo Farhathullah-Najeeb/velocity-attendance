@@ -7,6 +7,18 @@ export interface IRole {
   updatedAt?: string;
 }
 
+export interface ISite {
+  _id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters?: number;
+  address?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface IUser {
   _id: string;
   name: string;
@@ -14,6 +26,7 @@ export interface IUser {
   role: 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN';
   department?: string;
   location?: string;
+  assignedSite?: string | ISite;
   isActive?: boolean;
   isApproved?: boolean;
   customRole?: IRole;
@@ -47,6 +60,21 @@ export interface IAttendance {
   isEarlyCheckout: boolean;
   isHolidayWork: boolean;
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED';
+  remarks?: string;
+  approvedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface IOvertime {
+  _id: string;
+  employeeId: string | IUser;
+  dateStr: string;
+  startTime: string;
+  endTime: string;
+  overtimeMinutes: number;
+  workSummary: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   remarks?: string;
   approvedBy?: string;
   createdAt?: string;
@@ -105,6 +133,11 @@ export interface ISettings {
   officeStartTime: string;
   officeEndTime: string;
   gracePeriod: number;
+  monthlyGraceAllowance?: number;
+  officeLatitude?: number;
+  officeLongitude?: number;
+  allowedRadiusMeters?: number;
+  geofencingEnabled?: boolean;
 }
 
 export interface ILoginResponse {

@@ -18,7 +18,6 @@ import {
   FileSpreadsheet, 
   FileText,
   Clock3,
-  X,
   AlertTriangle
 } from 'lucide-react';
 import './AttendanceHistory.css';
@@ -82,14 +81,16 @@ const AttendanceHistory: React.FC = () => {
   // Overtime Request Modal States
   const [otModalOpen, setOtModalOpen] = useState(false);
   const [selectedOtRecord, setSelectedOtRecord] = useState<IAttendance | null>(null);
-  const [otMinutes, setOtMinutes] = useState<number | ''>('');
+  const [otStartTime, setOtStartTime] = useState('18:30');
+  const [otEndTime, setOtEndTime] = useState('20:30');
   const [otReason, setOtReason] = useState('');
   const [otLoading, setOtLoading] = useState(false);
   const [otMessage, setOtMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const openOtModal = (log: IAttendance) => {
     setSelectedOtRecord(log);
-    setOtMinutes('');
+    setOtStartTime('18:30');
+    setOtEndTime('20:30');
     setOtReason('');
     setOtMessage(null);
     setOtModalOpen(true);
@@ -97,15 +98,20 @@ const AttendanceHistory: React.FC = () => {
 
   const handleOtSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedOtRecord || !otMinutes || !otReason.trim()) return;
+    if (!selectedOtRecord || !otStartTime || !otEndTime || !otReason.trim()) return;
     
     setOtLoading(true);
     setOtMessage(null);
     try {
-      await api.post('/attendance/overtime/request', {
-        attendanceId: selectedOtRecord._id,
-        overtimeMinutes: Number(otMinutes),
-        reason: otReason.trim()
+      const dateStr = selectedOtRecord.dateStr || (selectedOtRecord.date ? selectedOtRecord.date.split('T')[0] : '');
+      const startISO = new Date(`${dateStr}T${otStartTime}:00`).toISOString();
+      const endISO = new Date(`${dateStr}T${otEndTime}:00`).toISOString();
+
+      await api.post('/overtime/request', {
+        dateStr,
+        startTime: startISO,
+        endTime: endISO,
+        workSummary: otReason.trim()
       });
       setOtMessage({ text: 'Overtime request submitted successfully.', type: 'success' });
       setTimeout(() => {
@@ -663,19 +669,31 @@ const AttendanceHistory: React.FC = () => {
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label className="form-label">
-                    Overtime Duration (Minutes) <span className="required-star">*</span>
-                  </label>
-                  <input 
-                    type="number"
-                    className="form-input modal-input" 
-                    placeholder="e.g. 120"
-                    value={otMinutes}
-                    onChange={(e) => setOtMinutes(e.target.value ? Number(e.target.value) : '')}
-                    min="1"
-                    required
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Start Time <span className="required-star">*</span>
+                    </label>
+                    <input 
+                      type="time"
+                      className="form-input modal-input" 
+                      value={otStartTime}
+                      onChange={(e) => setOtStartTime(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      End Time <span className="required-star">*</span>
+                    </label>
+                    <input 
+                      type="time"
+                      className="form-input modal-input" 
+                      value={otEndTime}
+                      onChange={(e) => setOtEndTime(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
