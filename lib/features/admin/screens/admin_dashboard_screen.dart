@@ -1,12 +1,11 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter_app/features/shared/widgets/app_scaffold.dart';
-import 'package:flutter_app/features/shared/widgets/dashboard_header_scaffold.dart';
+import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/dashboard_header_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import '../services/admin_service.dart';
-import '../../../core/theme/app_theme.dart';
 
 final adminStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
@@ -49,377 +48,292 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final statsAsync = ref.watch(adminStatsProvider);
 
     return statsAsync.when(
-      loading: () => const AppScaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const AppScaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => AppScaffold(
         body: Center(child: Text('Error loading dashboard: $err')),
       ),
       data: (stats) {
         return DashboardHeaderScaffold(
-          headerHeight: 340.0,
+          headerHeight: 280.0,
           onRefresh: () async {
             ref.invalidate(adminStatsProvider);
           },
           headerContent: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: 'VEL',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.middle,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                            child: Icon(Icons.location_on, color: AppTheme.primaryRed, size: 20),
-                          ),
-                        ),
-                        const TextSpan(
-                          text: 'CITY',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'THE PROJECT MANAGEMENT PEOPLE',
+              // const VelocityLogo(height: 28),
+              // const SizedBox(height: 20),
+              Text(
+                'Welcome back, Admin!',
                 style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 8,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Welcome back,',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
               const SizedBox(height: 4),
-              const Row(
-                children: [
-                  Text(
-                    'Admin',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Text('👋', style: TextStyle(fontSize: 24)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Here\'s what\'s happening in your organization today.',
-                style: TextStyle(color: Colors.white60, fontSize: 13),
+              Text(
+                'Here is the daily overview of staff and organizational attendance.',
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.8),
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
           bodyContent: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-
-                      // Stat Cards Grid
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isDesktop = constraints.maxWidth > 600;
-                            return GridView.count(
-                              padding: EdgeInsets.zero,
-                              crossAxisCount: isDesktop ? 4 : 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              childAspectRatio: isDesktop ? 1.5 : 1.15,
-                              children: [
-                                _RedesignedStatCard(
-                                  title: 'APPROVED EMPLOYEES',
-                                  count: stats['approvedEmployees'] ?? 0,
-                                  icon: Icons.people_outline,
-                                  color: AppTheme.statBlue,
-                                  subtitle: 'Active staff members',
-                                  isTrendUp: true,
-                                ),
-                                _RedesignedStatCard(
-                                  title: 'PENDING EMPLOYEES',
-                                  count: stats['pendingEmployees'] ?? 0,
-                                  icon: Icons.person_outline,
-                                  color: AppTheme.statYellow,
-                                  subtitle: 'Awaiting registration approval',
-                                  isTrendUp: false,
-                                ),
-                                _RedesignedStatCard(
-                                  title: 'PENDING LEAVES',
-                                  count: stats['pendingLeaves'] ?? 0,
-                                  icon: Icons.calendar_today_outlined,
-                                  color: AppTheme.statPurple,
-                                  subtitle: 'Leave applications to review',
-                                  isTrendUp: false,
-                                ),
-                                _RedesignedStatCard(
-                                  title: 'PENDING EXCEPTIONS',
-                                  count: stats['pendingAttendance'] ?? 0,
-                                  icon: Icons.warning_amber_rounded,
-                                  color: AppTheme.statOrange,
-                                  subtitle:
-                                      'Late-ins / early-outs pending review',
-                                  isTrendUp: true,
-                                ),
-                              ],
-                            );
-                          },
+              // Stat Cards Grid
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isDesktop = constraints.maxWidth > 600;
+                    return GridView.count(
+                      padding: EdgeInsets.zero,
+                      crossAxisCount: isDesktop ? 4 : 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: isDesktop ? 1.5 : 1.15,
+                      children: [
+                        _RedesignedStatCard(
+                          title: 'APPROVED EMPLOYEES',
+                          count: stats['approvedEmployees'] ?? 0,
+                          icon: Icons.people_outline,
+                          color: Colors.blue.shade700,
+                          subtitle: 'Active staff members',
+                          isTrendUp: true,
                         ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Management Control Center
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        _RedesignedStatCard(
+                          title: 'PENDING EMPLOYEES',
+                          count: stats['pendingEmployees'] ?? 0,
+                          icon: Icons.person_outline,
+                          color: Colors.amber.shade700,
+                          subtitle: 'Awaiting registration approval',
+                          isTrendUp: false,
+                        ),
+                        _RedesignedStatCard(
+                          title: 'PENDING LEAVES',
+                          count: stats['pendingLeaves'] ?? 0,
+                          icon: Icons.calendar_today_outlined,
+                          color: Colors.purple.shade700,
+                          subtitle: 'Leave applications to review',
+                          isTrendUp: false,
+                        ),
+                        _RedesignedStatCard(
+                          title: 'PENDING EXCEPTIONS',
+                          count: stats['pendingAttendance'] ?? 0,
+                          icon: Icons.warning_amber_rounded,
+                          color: Colors.orange.shade700,
+                          subtitle: 'Late-ins / early-outs pending review',
+                          isTrendUp: true,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Management Control Center
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.trending_up,
-                                      color: AppTheme.primaryRed,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'MANAGEMENT CONTROL CENTER',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Text(
-                                  'View All',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryRed,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            Icon(
+                              Icons.trending_up,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 20,
                             ),
-                            const SizedBox(height: 12),
-                            _ControlCenterCard(
-                              icon: Icons.people_outline,
-                              title: 'Employee Approvals',
-                              subtitle:
-                                  'Review and approve pending registration requests.',
-                              onTap: () =>
-                                  AutoTabsRouter.of(context).setActiveIndex(1),
-                            ),
-                            const SizedBox(height: 8),
-                            _ControlCenterCard(
-                              icon: Icons.calendar_today_outlined,
-                              title: 'Leave Requests',
-                              subtitle:
-                                  'Process employee leave logs and balances.',
-                              onTap: () =>
-                                  AutoTabsRouter.of(context).setActiveIndex(2),
-                            ),
-                            const SizedBox(height: 8),
-                            _ControlCenterCard(
-                              icon: Icons.warning_amber_rounded,
-                              title: 'Exception Requests',
-                              subtitle:
-                                  'Review late-ins, early-outs and other exceptions.',
-                              onTap: () =>
-                                  AutoTabsRouter.of(context).setActiveIndex(3),
-                            ),
-                            const SizedBox(height: 8),
-                            _ControlCenterCard(
-                              icon: Icons.settings_outlined,
-                              title: 'Holidays & Settings',
-                              subtitle:
-                                  'Configure office hours, grace periods & holidays.',
-                              onTap: () =>
-                                  AutoTabsRouter.of(context).setActiveIndex(4),
-                            ),
-                            const SizedBox(height: 8),
-                            _ControlCenterCard(
-                              icon: Icons.analytics_outlined,
-                              title: 'Attendance Reports',
-                              subtitle:
-                                  'Export monthly or weekly logs to PDF & Excel.',
-                              onTap: () =>
-                                  AutoTabsRouter.of(context).setActiveIndex(5),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'MANAGEMENT CONTROL CENTER',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ],
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _ControlCenterCard(
+                      icon: Icons.people_outline,
+                      title: 'Employee Approvals',
+                      subtitle:
+                          'Review and approve pending registration requests.',
+                      onTap: () => AutoTabsRouter.of(context).setActiveIndex(1),
+                    ),
+                    const SizedBox(height: 8),
+                    _ControlCenterCard(
+                      icon: Icons.calendar_today_outlined,
+                      title: 'Leave Requests',
+                      subtitle: 'Process employee leave logs and balances.',
+                      onTap: () => AutoTabsRouter.of(context).setActiveIndex(2),
+                    ),
+                    const SizedBox(height: 8),
+                    _ControlCenterCard(
+                      icon: Icons.warning_amber_rounded,
+                      title: 'Exception Requests',
+                      subtitle:
+                          'Review late-ins, early-outs and other exceptions.',
+                      onTap: () => AutoTabsRouter.of(context).setActiveIndex(3),
+                    ),
+                    const SizedBox(height: 8),
+                    _ControlCenterCard(
+                      icon: Icons.settings_outlined,
+                      title: 'Holidays & Settings',
+                      subtitle:
+                          'Configure office hours, grace periods & holidays.',
+                      onTap: () => AutoTabsRouter.of(context).setActiveIndex(4),
+                    ),
+                    const SizedBox(height: 8),
+                    _ControlCenterCard(
+                      icon: Icons.analytics_outlined,
+                      title: 'Attendance Reports',
+                      subtitle: 'Export monthly or weekly logs to PDF & Excel.',
+                      onTap: () => AutoTabsRouter.of(context).setActiveIndex(5),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Portal Health Summary
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // Portal Health Summary
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.black87,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.keyboard_arrow_up,
-                                  size: 24,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                DateFormat(
-                                  'hh:mm:ss a',
-                                ).format(_currentTime).toLowerCase(),
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.black87,
-                                  letterSpacing: -1,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'CURRENT OFFICE TIME',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.monitor_heart_outlined,
-                                    size: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'PORTAL HEALTH SUMMARY',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.0,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              (() {
-                                final isServerOnline =
-                                    stats['isServerOnline'] == true;
-                                final settings =
-                                    stats['settings'] as Map<String, dynamic>?;
-                                final isGeoActive =
-                                    settings?['geofencingEnabled'] == true;
-                                final radius =
-                                    settings?['allowedRadiusMeters'] ?? 0;
-                                final geoText = isGeoActive
-                                    ? 'ACTIVE (Radius: ${radius}m)'
-                                    : 'INACTIVE';
-
-                                return Column(
-                                  children: [
-                                    _HealthRow(
-                                      label: 'Backend Server Status:',
-                                      value: isServerOnline
-                                          ? 'ONLINE'
-                                          : 'OFFLINE',
-                                      valueColor: isServerOnline
-                                          ? Colors.green.shade600
-                                          : Colors.red.shade600,
-                                    ),
-                                    const Divider(
-                                      height: 24,
-                                      color: Color(0xFFF1F5F9),
-                                    ),
-                                    _HealthRow(
-                                      label: 'GPS Geo-Fencing:',
-                                      value: geoText,
-                                      valueColor: isGeoActive
-                                          ? Colors.black87
-                                          : Colors.grey.shade500,
-                                    ),
-                                    const Divider(
-                                      height: 24,
-                                      color: Color(0xFFF1F5F9),
-                                    ),
-                                    _HealthRow(
-                                      label: 'Pending Tasks:',
-                                      value:
-                                          '${(stats['pendingEmployees'] ?? 0) + (stats['pendingLeaves'] ?? 0) + (stats['pendingAttendance'] ?? 0)} Requests',
-                                      valueColor: Colors.black54,
-                                    ),
-                                  ],
-                                );
-                              })(),
-                            ],
-                          ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black87, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_arrow_up,
+                          size: 24,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        DateFormat(
+                          'hh:mm:ss a',
+                        ).format(_currentTime).toLowerCase(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'CURRENT OFFICE TIME',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                          color: Colors.grey.shade500,
                         ),
                       ),
 
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 32),
+
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.monitor_heart_outlined,
+                            size: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'PORTAL HEALTH SUMMARY',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      (() {
+                        final isServerOnline = stats['isServerOnline'] == true;
+                        final settings =
+                            stats['settings'] as Map<String, dynamic>?;
+                        final isGeoActive =
+                            settings?['geofencingEnabled'] == true;
+                        final radius = settings?['allowedRadiusMeters'] ?? 0;
+                        final geoText = isGeoActive
+                            ? 'ACTIVE (Radius: ${radius}m)'
+                            : 'INACTIVE';
+
+                        return Column(
+                          children: [
+                            _HealthRow(
+                              label: 'Backend Server Status:',
+                              value: isServerOnline ? 'ONLINE' : 'OFFLINE',
+                              valueColor: isServerOnline
+                                  ? Colors.green.shade600
+                                  : Colors.red.shade600,
+                            ),
+                            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+                            _HealthRow(
+                              label: 'GPS Geo-Fencing:',
+                              value: geoText,
+                              valueColor: isGeoActive
+                                  ? Colors.black87
+                                  : Colors.grey.shade500,
+                            ),
+                            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+                            _HealthRow(
+                              label: 'Pending Tasks:',
+                              value:
+                                  '${(stats['pendingEmployees'] ?? 0) + (stats['pendingLeaves'] ?? 0) + (stats['pendingAttendance'] ?? 0)} Requests',
+                              valueColor: Colors.black54,
+                            ),
+                          ],
+                        );
+                      })(),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 100),
             ],
           ),
         );
@@ -579,10 +493,16 @@ class _ControlCenterCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primaryRed.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppTheme.primaryRed, size: 20),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

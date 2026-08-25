@@ -43,15 +43,16 @@ class AttendanceService {
     });
   }
 
-  Future<void> applyPenalty(String id, String penaltyType) async {
+  Future<void> applyPenalty(String id, String penaltyType, [String? remarks]) async {
     await _dio.patch('/attendance/$id/penalty', data: {
       'penaltyType': penaltyType,
+      'remarks': ?remarks,
     });
   }
 
   Future<List<Attendance>> getLiveMonitoring(String? date) async {
     final response = await _dio.get('/attendance/wfh-overtime-locations', queryParameters: {
-      if (date != null) 'date': date,
+      'date': ?date,
     });
     final data = response.data as List;
     return data.map((e) => Attendance.fromJson(e)).toList();
@@ -59,8 +60,8 @@ class AttendanceService {
 
   Future<List<Attendance>> getHistory(String employeeId, {String? startDate, String? endDate}) async {
     final response = await _dio.get('/attendance/history/$employeeId', queryParameters: {
-      if (startDate != null) 'startDate': startDate,
-      if (endDate != null) 'endDate': endDate,
+      'startDate': ?startDate,
+      'endDate': ?endDate,
     });
     final data = response.data as List;
     return data.map((e) => Attendance.fromJson(e)).toList();
@@ -68,14 +69,14 @@ class AttendanceService {
 
   Future<Map<String, dynamic>> getWeeklyReport({String? employeeId}) async {
     final response = await _dio.get('/attendance/weekly-report', queryParameters: {
-      if (employeeId != null) 'employeeId': employeeId,
+      'employeeId': ?employeeId,
     });
     return response.data;
   }
 
   Future<Map<String, dynamic>> getMonthlyReport({String? employeeId}) async {
     final response = await _dio.get('/attendance/monthly-report', queryParameters: {
-      if (employeeId != null) 'employeeId': employeeId,
+      'employeeId': ?employeeId,
     });
     return response.data;
   }
@@ -84,7 +85,7 @@ class AttendanceService {
     final response = await _dio.get('/attendance/custom-report', queryParameters: {
       'startDate': startDate,
       'endDate': endDate,
-      if (employeeId != null) 'employeeId': employeeId,
+      'employeeId': ?employeeId,
     });
     return response.data;
   }
@@ -92,10 +93,10 @@ class AttendanceService {
   Future<List<int>> exportReport({required String format, String? type, String? employeeId, String? startDate, String? endDate}) async {
     final response = await _dio.get('/attendance/report/export', queryParameters: {
       'format': format,
-      if (type != null) 'type': type,
-      if (employeeId != null) 'employeeId': employeeId,
-      if (startDate != null) 'startDate': startDate,
-      if (endDate != null) 'endDate': endDate,
+      'type': ?type,
+      'employeeId': ?employeeId,
+      'startDate': ?startDate,
+      'endDate': ?endDate,
     }, options: Options(responseType: ResponseType.bytes));
     return response.data as List<int>;
   }

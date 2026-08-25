@@ -1,50 +1,68 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'responsive_container.dart';
 
+/// A layout container that is used INSIDE the AppShell's Scaffold.
+/// It does NOT create its own Scaffold — that would be nested and causes
+/// framework assertion errors (!semantics.parentDataDirty, etc.).
+///
+/// [body]   — the main scrollable/non-scrollable content
+/// [floatingActionButton] — rendered as a Stack overlay above the body
+/// [backgroundColor] — optional background override
 class AppScaffold extends StatelessWidget {
   final Widget body;
   final Widget? floatingActionButton;
-  final PreferredSizeWidget? appBar;
   final Color? backgroundColor;
+
+  // appBar is intentionally REMOVED — the shell's Scaffold controls the AppBar.
+  // Any per-screen app bar needs are handled by the shell via the tab index.
 
   const AppScaffold({
     super.key,
     required this.body,
     this.floatingActionButton,
-    this.appBar,
     this.backgroundColor,
   });
 
-  static EdgeInsets getScrollPadding(BuildContext context, {EdgeInsets basePadding = EdgeInsets.zero}) {
+  /// Returns padding that ensures scrollable content clears the floating bottom
+  /// nav pill on mobile. On desktop the nav is a sidebar, so no extra padding.
+  static EdgeInsets getScrollPadding(
+    BuildContext context, {
+    EdgeInsets basePadding = EdgeInsets.zero,
+  }) {
     final isDesktop = MediaQuery.of(context).size.width > 800;
-    // Top of nav bar pill is now fixed at ~70px from the absolute bottom (safe area was removed).
-    // We add 86px so lists clear the nav bar with a nice ~16px gap.
-    final extraBottom = isDesktop ? 0.0 : 86.0;
+    final extraBottom = isDesktop ? 0.0 : 130.0;
     return basePadding.copyWith(bottom: basePadding.bottom + extraBottom);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 800;
-    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
-    
-    // Scaffold natively places the FAB at 16px + safeArea from the absolute bottom.
-    // We want the FAB to sit at 86px from the absolute bottom (16px above the 70px nav pill).
-    // So we need: 86 - 16 - safeArea = 70 - safeArea
-    double fabPadding = isDesktop ? 0.0 : (70.0 - bottomSafeArea);
-    if (fabPadding < 0) fabPadding = 0.0;
+    final bg = backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
 
-    return Scaffold(
-      backgroundColor: backgroundColor ?? AppTheme.lightBackground,
-      appBar: appBar,
-      body: body, // Transparent scroll bounds, no clipping!
-      floatingActionButton: floatingActionButton != null 
-          ? Padding(
-              padding: EdgeInsets.only(bottom: fabPadding),
-              child: floatingActionButton,
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    Widget content = ResponsiveContainer(
+      maxWidth: 1024,
+      child: body,
+    );
+
+    if (floatingActionButton != null) {
+      // Place the FAB in a Stack overlay above the body.
+      // On mobile we shift it up by 90px to clear the nav pill.
+      final fabBottom = isDesktop ? 16.0 : 106.0;
+      content = Stack(
+        children: [
+          content,
+          Positioned(
+            bottom: fabBottom,
+            right: 16,
+            child: floatingActionButton!,
+          ),
+        ],
+      );
+    }
+
+    return ColoredBox(
+      color: bg,
+      child: content,
     );
   }
 }

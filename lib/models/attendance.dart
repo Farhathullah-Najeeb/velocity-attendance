@@ -13,6 +13,8 @@ class Attendance {
   final bool? isLateArrival;
   final bool? isEarlyCheckout;
   final String approvalStatus; // 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED'
+  final String? remarks;
+  final String? penaltyType;
 
   Attendance({
     required this.id,
@@ -29,6 +31,8 @@ class Attendance {
     this.isLateArrival,
     this.isEarlyCheckout,
     required this.approvalStatus,
+    this.remarks,
+    this.penaltyType,
   });
 
   factory Attendance.fromJson(Map<String, dynamic> json) {
@@ -47,6 +51,8 @@ class Attendance {
       isLateArrival: json['isLateArrival'] as bool?,
       isEarlyCheckout: json['isEarlyCheckout'] as bool?,
       approvalStatus: json['approvalStatus'] as String? ?? 'NOT_REQUIRED',
+      remarks: json['remarks'] as String?,
+      penaltyType: json['penaltyType'] as String?,
     );
   }
 }

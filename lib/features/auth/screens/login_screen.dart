@@ -27,25 +27,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _submit() async {
-    print('LOGIN DEBUG: _submit() called');
+    // print('LOGIN DEBUG: _submit() called');
     if (_formKey.currentState!.validate()) {
-      print('LOGIN DEBUG: Form validated successfully');
+      // print('LOGIN DEBUG: Form validated successfully');
       final success = await ref.read(authProvider.notifier).login(
             _emailController.text,
             _passwordController.text,
           );
       
-      print('LOGIN DEBUG: login() returned $success');
+      // print('LOGIN DEBUG: login() returned $success');
       
-      if (success) {
-        final user = ref.read(authProvider).user;
-        print('LOGIN DEBUG: user fetched after success: ${user?.name}, role: ${user?.role}');
-        // Note: Actual navigation is handled by the ref.listen block in build()
-      } else {
-        print('LOGIN DEBUG: login failed. Check UI for error messages.');
+      if (!success) {
+        // Error handling handled via state in authProvider
       }
     } else {
-      print('LOGIN DEBUG: Form validation failed');
+      // print('LOGIN DEBUG: Form validation failed');
     }
   }
 
@@ -53,7 +49,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     ref.listen(authProvider, (previous, next) {
       if (next.user != null && !next.isLoading) {
-        context.router.replace(const AppShellRoute());
+        if (next.user!.isApproved == false) {
+          context.router.replace(const PendingApprovalRoute());
+        } else if (next.user!.isActive == false) {
+          // Do nothing, UI will show error from auth provider logic below,
+          // but we should technically log them out so they aren't stuck logged in 
+          // without access to the shell.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Your account is deactivated. Please contact an admin.')),
+          );
+          ref.read(authProvider.notifier).logout();
+        } else {
+          context.router.replace(const AppShellRoute());
+        }
+      } else if (next.error != null && next.error!.toLowerCase().contains('pending')) {
+        context.router.replace(const PendingApprovalRoute());
       }
     });
 
@@ -68,18 +78,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200),
+              border: Border.all(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     authState.error!,
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
                   ),
                 ),
               ],
@@ -153,6 +163,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton(
+                  onPressed: () => context.router.push(const SetupSuperAdminRoute()),
+                  child: Text(
+                    'Initialize System (Super Admin)',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  ),
                 ),
               ),
             ],

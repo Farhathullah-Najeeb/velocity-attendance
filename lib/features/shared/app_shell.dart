@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:auto_route/auto_route.dart';
 import '../auth/providers/auth_provider.dart';
 import 'widgets/velocity_logo.dart';
-import '../../core/theme/app_theme.dart';
+
 import '../../core/router/app_router.dart';
 import '../../models/user.dart';
+import 'widgets/notification_badge.dart';
 
 @RoutePage()
 class AppShellScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,8 @@ class AppShellScreen extends ConsumerStatefulWidget {
 }
 
 class _AppShellScreenState extends ConsumerState<AppShellScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
   void _onItemTapped(int index, bool isAdmin, TabsRouter tabsRouter) {
     tabsRouter.setActiveIndex(index);
   }
@@ -33,7 +36,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryRed,
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -63,7 +66,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              color: AppTheme.darkCharcoal,
+              color: Theme.of(context).colorScheme.surface,
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,11 +76,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                   const SizedBox(height: 24),
                   Text(
                     user?.name ?? 'Employee',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.bold),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -87,7 +86,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                         ? 'Administrator'
                         : 'Staff Member',
                     style: TextStyle(
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 14,
                     ),
                   ),
@@ -102,12 +101,12 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                     ListTile(
                       leading: Icon(
                         (destinations[i].icon as Icon).icon,
-                        color: selectedIndex == i ? AppTheme.primaryRed : Colors.grey.shade700,
+                        color: selectedIndex == i ? Theme.of(context).colorScheme.primary : Theme.of(context).unselectedWidgetColor,
                       ),
                       title: Text(
                         destinations[i].label,
                         style: TextStyle(
-                          color: selectedIndex == i ? AppTheme.primaryRed : Colors.black87,
+                          color: selectedIndex == i ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                           fontWeight: selectedIndex == i ? FontWeight.bold : FontWeight.w500,
                         ),
                       ),
@@ -142,7 +141,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
-    final isAdmin = user?.role == 'ADMIN' || user?.role == 'SUPER_ADMIN';
+    final isSuperAdmin = user?.role == 'SUPER_ADMIN';
+    final isAdmin = user?.role == 'ADMIN' || isSuperAdmin;
 
     final List<NavigationDestination> employeeDestinations = [
       const NavigationDestination(
@@ -217,19 +217,19 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           ? const [
               AdminDashboardRoute(),
               AdminEmployeesRoute(),
-              AdminApprovalsRoute(), // Leave requests
-              AdminAttendanceApprovalsRoute(), // Exceptions
+              AdminApprovalsRoute(),
+              AdminAttendanceApprovalsRoute(),
               AdminSettingsRoute(),
               AdminReportsRoute(),
               ProfileRoute(),
             ]
           : const [
-              EmployeeDashboardRoute(),
-              EmployeeLeavesRoute(),
-              EmployeeHistoryRoute(),
-              EmployeeOvertimeRoute(),
-              ProfileRoute(),
-            ],
+                  EmployeeDashboardRoute(),
+                  EmployeeLeavesRoute(),
+                  EmployeeHistoryRoute(),
+                  EmployeeOvertimeRoute(),
+                  ProfileRoute(),
+                ],
       builder: (context, child) {
         final tabsRouter = AutoTabsRouter.of(context);
         final selectedIndex = tabsRouter.activeIndex;
@@ -240,7 +240,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
 
             if (isDesktop) {
               return Scaffold(
-                backgroundColor: AppTheme.lightBackground,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 body: Row(
                   children: [
                     Container(
@@ -270,7 +270,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryRed,
+                                    color: Theme.of(context).colorScheme.primary,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   alignment: Alignment.center,
@@ -314,11 +314,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.notifications_none,
-                                  color: Colors.grey.shade600,
-                                  size: 20,
-                                ),
+                                const NotificationBadge(size: 20),
                               ],
                             ),
                           ),
@@ -344,14 +340,14 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? AppTheme.primaryRed.withValues(
+                                          ? Theme.of(context).colorScheme.primary.withValues(
                                               alpha: 0.05,
                                             )
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: isSelected
-                                            ? AppTheme.primaryRed.withValues(
+                                            ? Theme.of(context).colorScheme.primary.withValues(
                                                 alpha: 0.1,
                                               )
                                             : Colors.transparent,
@@ -366,7 +362,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                                     (d.icon as Icon).icon
                                               : (d.icon as Icon).icon,
                                           color: isSelected
-                                              ? AppTheme.primaryRed
+                                              ? Theme.of(context).colorScheme.primary
                                               : Colors.grey.shade600,
                                           size: 20,
                                         ),
@@ -375,7 +371,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                           d.label,
                                           style: TextStyle(
                                             color: isSelected
-                                                ? AppTheme.primaryRed
+                                                ? Theme.of(context).colorScheme.primary
                                                 : Colors.grey.shade700,
                                             fontWeight: isSelected
                                                 ? FontWeight.bold
@@ -426,35 +422,50 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
 
             // Mobile Layout
             return Scaffold(
+              key: _scaffoldKey,
               extendBody: true,
-              backgroundColor: AppTheme.lightBackground,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               drawer: _buildDrawer(context, user, isAdmin, selectedIndex, tabsRouter, destinations),
-              appBar: selectedIndex == 0 ? null : AppBar(
-                backgroundColor: AppTheme.darkCharcoal,
+              appBar: AppBar(
+                backgroundColor: selectedIndex == 0
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.surface,
+                iconTheme: Theme.of(context).appBarTheme.iconTheme,
                 elevation: 0,
-                centerTitle: true,
-                title: Text(
+                centerTitle: selectedIndex != 0,
+                title: selectedIndex == 0
+                    ? const VelocityLogo(height: 28)
+                    : Text(
                         destinations[selectedIndex].label,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).appBarTheme.foregroundColor ??
+                              Theme.of(context).colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                leading: (selectedIndex >= (isAdmin ? 4 : 3))
+                leading: selectedIndex >= (isAdmin ? 4 : 3)
                     ? IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: Theme.of(context).appBarTheme.iconTheme?.color,
+                        ),
                         onPressed: () => tabsRouter.setActiveIndex(0),
                       )
-                    : null,
+                    : IconButton(
+                        icon: Icon(
+                          Icons.menu,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                      ),
                 actions: [
-                  Builder(
-                    builder: (context) {
-                      return IconButton(
-                        icon: const Icon(Icons.menu, color: Colors.white),
-                        onPressed: () => Scaffold.of(context).openDrawer(),
-                      );
-                    }
+                  IconButton(
+                    icon: Icon(
+                      Icons.notifications_none,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    onPressed: () => context.router.push(const NotificationsRoute()),
                   ),
                 ],
               ),
@@ -462,14 +473,12 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               bottomNavigationBar: selectedIndex < (isAdmin ? 4 : 3)
                   ? Builder(
                       builder: (context) {
-                        // The user explicitly wants it lower. Let's use a small fixed margin of 12.0
-                        // so it sits very close to the bottom bezel.
-                        final bottomMargin = 12.0;
+                        // The nav pill is about 90px tall from the bottom.
                         return Container(
                           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12.0),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppTheme.darkNavy,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
@@ -498,12 +507,12 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? AppTheme.primaryRed.withValues(alpha: 0.15) : Colors.transparent,
+                                        color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : Colors.transparent,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Icon(
                                         isSelected ? (d.selectedIcon as Icon).icon : (d.icon as Icon).icon,
-                                        color: isSelected ? AppTheme.primaryRed : Colors.white70,
+                                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                         size: 24,
                                       ),
                                     ),
@@ -511,7 +520,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                                     Text(
                                       label,
                                       style: TextStyle(
-                                        color: isSelected ? AppTheme.primaryRed : Colors.white70,
+                                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                                         fontSize: 10,
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                       ),

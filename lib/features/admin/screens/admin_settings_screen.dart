@@ -1,16 +1,17 @@
 import 'package:auto_route/auto_route.dart';
-import '../../../core/utils/error_handler.dart';
-import '../../shared/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/settings_service.dart';
-import '../../../models/settings.dart';
-import '../../../models/holiday.dart';
-import '../../../models/site.dart';
-import '../../../core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/velocity_colors.dart';
+import '../../../core/utils/error_handler.dart';
+import '../../../core/utils/snackbar_utils.dart';
+import '../../../models/holiday.dart';
+import '../../../models/settings.dart';
+import '../../../models/site.dart';
+import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/states.dart';
+import '../services/settings_service.dart';
 
-// Provides the settings data
 final settingsProvider = FutureProvider.autoDispose<Settings>((ref) {
   return ref.watch(settingsServiceProvider).getSettings();
 });
@@ -23,124 +24,178 @@ final sitesProvider = FutureProvider.autoDispose<List<Site>>((ref) {
   return ref.watch(settingsServiceProvider).getSites();
 });
 
-final locationPoliciesProvider = FutureProvider.autoDispose<List<LocationPolicy>>((ref) {
-  return ref.watch(settingsServiceProvider).getLocationPolicies();
-});
+final locationPoliciesProvider =
+    FutureProvider.autoDispose<List<LocationPolicy>>((ref) {
+      return ref.watch(settingsServiceProvider).getLocationPolicies();
+    });
 
 @RoutePage()
-class AdminSettingsScreen extends ConsumerStatefulWidget {
+class AdminSettingsScreen extends StatelessWidget {
   const AdminSettingsScreen({super.key});
 
   @override
-  ConsumerState<AdminSettingsScreen> createState() => _AdminSettingsScreenState();
-}
-
-class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
-  // To keep the file clean, we will implement sections inside this class or via smaller widgets.
-  
-  @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      appBar: MediaQuery.of(context).size.width > 800 ? AppBar(title: const Text('System Configuration')) : null,
-      body: SingleChildScrollView(
-              padding: AppScaffold.getScrollPadding(context, basePadding: const EdgeInsets.all(16.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return DefaultTabController(
+      length: 4,
+      child: AppScaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildSettingsSection(context, ref),
-            const SizedBox(height: 24),
-            _buildHolidaysSection(context, ref),
-            const SizedBox(height: 24),
-            _buildSitesSection(context, ref),
-            const SizedBox(height: 24),
-            _buildPoliciesSection(context, ref),
+            Container(
+              color: Theme.of(context).colorScheme.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).hintColor,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                indicatorSize: TabBarIndicatorSize.label,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+                tabs: const [
+                  Tab(
+                    icon: Icon(Icons.schedule_outlined, size: 18),
+                    text: 'Office & Timing',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.celebration_outlined, size: 18),
+                    text: 'Holidays',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.location_city_outlined, size: 18),
+                    text: 'Work Sites',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.policy_outlined, size: 18),
+                    text: 'Leave Policies',
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            const Expanded(
+              child: TabBarView(
+                children: [
+                  _OfficeTimingTab(),
+                  _HolidaysTab(),
+                  _WorkSitesTab(),
+                  _LocationPoliciesTab(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-  
-  Widget _buildSettingsSection(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(settingsProvider);
-    return state.when(
-      data: (settings) => _SettingsForm(initialSettings: settings),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
-    );
-  }
-
-  Widget _buildHolidaysSection(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(holidaysProvider);
-    return state.when(
-      data: (holidays) => _HolidaysList(holidays: holidays),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
-    );
-  }
-
-  Widget _buildSitesSection(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(sitesProvider);
-    return state.when(
-      data: (sites) => _SitesList(sites: sites),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
-    );
-  }
-
-  Widget _buildPoliciesSection(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(locationPoliciesProvider);
-    return state.when(
-      data: (policies) => _PoliciesList(policies: policies),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
-    );
-  }
 }
 
-class _SettingsForm extends ConsumerStatefulWidget {
-  final Settings initialSettings;
-  const _SettingsForm({required this.initialSettings});
+// ==========================================
+// 1. OFFICE TIMING & GEOFENCE TAB
+// ==========================================
+class _OfficeTimingTab extends ConsumerWidget {
+  const _OfficeTimingTab();
+
   @override
-  ConsumerState<_SettingsForm> createState() => _SettingsFormState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsProvider);
+
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(settingsProvider),
+      child: settingsAsync.when(
+        data: (settings) => _OfficeTimingForm(settings: settings),
+        loading: () => const LoadingStateWidget(),
+        error: (e, _) => ErrorStateWidget(
+          error: ErrorHandler.getUserMessage(e),
+          onRetry: () => ref.invalidate(settingsProvider),
+        ),
+      ),
+    );
+  }
 }
 
-class _SettingsFormState extends ConsumerState<_SettingsForm> {
+class _OfficeTimingForm extends ConsumerStatefulWidget {
+  final Settings settings;
+  const _OfficeTimingForm({required this.settings});
+
+  @override
+  ConsumerState<_OfficeTimingForm> createState() => _OfficeTimingFormState();
+}
+
+class _OfficeTimingFormState extends ConsumerState<_OfficeTimingForm> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _startCtrl;
   late TextEditingController _endCtrl;
   late TextEditingController _graceCtrl;
-  late TextEditingController _latCtrl;
-  late TextEditingController _lngCtrl;
   late TextEditingController _radiusCtrl;
-  late bool _geofence;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _startCtrl = TextEditingController(text: widget.initialSettings.officeStartTime);
-    _endCtrl = TextEditingController(text: widget.initialSettings.officeEndTime);
-    _graceCtrl = TextEditingController(text: widget.initialSettings.gracePeriod.toString());
-    _latCtrl = TextEditingController(text: widget.initialSettings.officeLatitude?.toString() ?? '');
-    _lngCtrl = TextEditingController(text: widget.initialSettings.officeLongitude?.toString() ?? '');
-    _radiusCtrl = TextEditingController(text: widget.initialSettings.allowedRadiusMeters?.toString() ?? '200');
-    _geofence = widget.initialSettings.geofencingEnabled ?? true;
+    _startCtrl = TextEditingController(text: widget.settings.officeStartTime);
+    _endCtrl = TextEditingController(text: widget.settings.officeEndTime);
+    _graceCtrl = TextEditingController(
+      text: widget.settings.gracePeriod.toString(),
+    );
+    _radiusCtrl = TextEditingController(
+      text: widget.settings.allowedRadiusMeters?.toString() ?? '500',
+    );
+  }
+
+  @override
+  void dispose() {
+    _startCtrl.dispose();
+    _endCtrl.dispose();
+    _graceCtrl.dispose();
+    _radiusCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectTime(TextEditingController ctrl) async {
+    TimeOfDay initial = const TimeOfDay(hour: 9, minute: 0);
+    if (ctrl.text.contains(':')) {
+      final parts = ctrl.text.split(':');
+      initial = TimeOfDay(
+        hour: int.tryParse(parts[0]) ?? 9,
+        minute: int.tryParse(parts[1]) ?? 0,
+      );
+    }
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (picked != null) {
+      final hour = picked.hour.toString().padLeft(2, '0');
+      final minute = picked.minute.toString().padLeft(2, '0');
+      setState(() => ctrl.text = '$hour:$minute');
+    }
   }
 
   Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      await ref.read(settingsServiceProvider).updateSettings({
-        'officeStartTime': _startCtrl.text,
-        'officeEndTime': _endCtrl.text,
-        'gracePeriod': int.tryParse(_graceCtrl.text) ?? 15,
-        'officeLatitude': double.tryParse(_latCtrl.text),
-        'officeLongitude': double.tryParse(_lngCtrl.text),
-        'allowedRadiusMeters': int.tryParse(_radiusCtrl.text) ?? 200,
-        'geofencingEnabled': _geofence,
-      });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved successfully')));
+      final payload = {
+        'officeStartTime': _startCtrl.text.trim(),
+        'officeEndTime': _endCtrl.text.trim(),
+        'gracePeriod': int.tryParse(_graceCtrl.text.trim()) ?? 15,
+        'allowedRadiusMeters': int.tryParse(_radiusCtrl.text.trim()) ?? 500,
+      };
+      await ref.read(settingsServiceProvider).updateSettings(payload);
+      ref.invalidate(settingsProvider);
+      if (mounted) {
+        SnackbarUtils.showSuccess(context, 'Settings updated successfully');
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
+      if (mounted) SnackbarUtils.handleApiError(context, e);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -148,47 +203,136 @@ class _SettingsFormState extends ConsumerState<_SettingsForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      padding: AppScaffold.getScrollPadding(
+        context,
+        basePadding: const EdgeInsets.all(16.0),
+      ),
+      child: Form(
+        key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Office Hours & Attendance Policies', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: TextField(controller: _startCtrl, decoration: const InputDecoration(labelText: 'Start Time (HH:MM)'))),
-                const SizedBox(width: 16),
-                Expanded(child: TextField(controller: _endCtrl, decoration: const InputDecoration(labelText: 'End Time (HH:MM)'))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(controller: _graceCtrl, decoration: const InputDecoration(labelText: 'Grace Period (mins)'), keyboardType: TextInputType.number),
-            const Divider(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Main Office Geofencing', style: Theme.of(context).textTheme.titleMedium),
-                Switch(value: _geofence, onChanged: (v) => setState(() => _geofence = v)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(controller: _radiusCtrl, decoration: const InputDecoration(labelText: 'Allowed Radius (meters)'), keyboardType: TextInputType.number),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: TextField(controller: _latCtrl, decoration: const InputDecoration(labelText: 'Latitude'))),
-                const SizedBox(width: 16),
-                Expanded(child: TextField(controller: _lngCtrl, decoration: const InputDecoration(labelText: 'Longitude'))),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _save,
-                child: _isLoading ? const CircularProgressIndicator() : const Text('Save Settings'),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Shift Hours & Attendance Rules',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Configure official shift timings and late arrival thresholds for the organisation.',
+                      style: TextStyle(
+                        color: Theme.of(context).hintColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _startCtrl,
+                            readOnly: true,
+                            onTap: () => _selectTime(_startCtrl),
+                            decoration: const InputDecoration(
+                              labelText: 'Shift Start Time',
+                              prefixIcon: Icon(Icons.wb_sunny_outlined),
+                            ),
+                            validator: (v) =>
+                                v == null || v.isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _endCtrl,
+                            readOnly: true,
+                            onTap: () => _selectTime(_endCtrl),
+                            decoration: const InputDecoration(
+                              labelText: 'Shift End Time',
+                              prefixIcon: Icon(Icons.nightlight_outlined),
+                            ),
+                            validator: (v) =>
+                                v == null || v.isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _graceCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Grace Period (Mins)',
+                              prefixIcon: Icon(Icons.timelapse_outlined),
+                            ),
+                            validator: (v) =>
+                                v == null || v.isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _radiusCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Allowed Radius (Meters)',
+                              prefixIcon: Icon(Icons.radar_outlined),
+                            ),
+                            validator: (v) =>
+                                v == null || v.isEmpty ? 'Required' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        onPressed: _isLoading ? null : _save,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Save Shift Settings'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -198,168 +342,697 @@ class _SettingsFormState extends ConsumerState<_SettingsForm> {
   }
 }
 
-class _HolidaysList extends ConsumerStatefulWidget {
-  final List<Holiday> holidays;
-  const _HolidaysList({required this.holidays});
+// ==========================================
+// 2. HOLIDAYS TAB
+// ==========================================
+class _HolidaysTab extends ConsumerStatefulWidget {
+  const _HolidaysTab();
+
   @override
-  ConsumerState<_HolidaysList> createState() => _HolidaysListState();
+  ConsumerState<_HolidaysTab> createState() => _HolidaysTabState();
 }
 
-class _HolidaysListState extends ConsumerState<_HolidaysList> {
+class _HolidaysTabState extends ConsumerState<_HolidaysTab> {
   final _dateCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
-  bool _isLoading = false;
+  String _type = 'PUBLIC';
+  bool _isAdding = false;
+
+  @override
+  void dispose() {
+    _dateCtrl.dispose();
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() => _dateCtrl.text = DateFormat('yyyy-MM-dd').format(picked));
+    }
+  }
 
   Future<void> _addHoliday() async {
-    if (_dateCtrl.text.isEmpty || _nameCtrl.text.isEmpty) return;
-    setState(() => _isLoading = true);
+    if (_dateCtrl.text.isEmpty || _nameCtrl.text.isEmpty) {
+      SnackbarUtils.showError(context, 'Please enter holiday name and date');
+      return;
+    }
+    setState(() => _isAdding = true);
     try {
-      await ref.read(settingsServiceProvider).addHoliday(_dateCtrl.text, _nameCtrl.text);
+      await ref.read(settingsServiceProvider).addHoliday(
+            date: _dateCtrl.text.trim(),
+            name: _nameCtrl.text.trim(),
+            type: _type,
+          );
       _dateCtrl.clear();
       _nameCtrl.clear();
       ref.invalidate(holidaysProvider);
+      if (mounted) {
+        SnackbarUtils.showSuccess(context, 'Holiday added successfully');
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
+      if (mounted) SnackbarUtils.handleApiError(context, e);
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isAdding = false);
     }
   }
 
-  Future<void> _deleteHoliday(String id) async {
-    try {
-      await ref.read(settingsServiceProvider).deleteHoliday(id);
-      ref.invalidate(holidaysProvider);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
+  Future<void> _deleteHoliday(Holiday holiday) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Holiday'),
+        content: Text('Are you sure you want to delete "${holiday.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VelocityColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ref.read(settingsServiceProvider).deleteHoliday(holiday.id);
+        ref.invalidate(holidaysProvider);
+        if (mounted) {
+          SnackbarUtils.showSuccess(context, 'Holiday deleted successfully');
+        }
+      } catch (e) {
+        if (mounted) SnackbarUtils.handleApiError(context, e);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Holiday Calendar', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _dateCtrl,
-                    decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)', prefixIcon: Icon(Icons.calendar_today)),
+    final holidaysAsync = ref.watch(holidaysProvider);
+
+    return SingleChildScrollView(
+      padding: AppScaffold.getScrollPadding(
+        context,
+        basePadding: const EdgeInsets.all(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Add Holiday Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Add New Holiday',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: TextField(
+                  const SizedBox(height: 16),
+                  TextFormField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Holiday Name'),
+                    decoration: const InputDecoration(
+                      labelText: 'Holiday Name',
+                      prefixIcon: Icon(Icons.celebration_outlined),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _addHoliday,
-                  child: const Text('Add'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (widget.holidays.isEmpty)
-              const Text('No holidays configured.', style: TextStyle(color: Colors.grey))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: widget.holidays.length,
-                itemBuilder: (context, index) {
-                  final h = widget.holidays[index];
-                  return ListTile(
-                    title: Text(h.name),
-                    subtitle: Text(h.date),
-                    trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteHoliday(h.id)),
-                  );
-                },
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _dateCtrl,
+                          readOnly: true,
+                          onTap: _selectDate,
+                          decoration: const InputDecoration(
+                            labelText: 'Date (YYYY-MM-DD)',
+                            prefixIcon: Icon(Icons.calendar_today_outlined),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _type,
+                          decoration: const InputDecoration(labelText: 'Type'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'PUBLIC',
+                              child: Text('PUBLIC'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'OPTIONAL',
+                              child: Text('OPTIONAL'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setState(() => _type = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      icon: _isAdding
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.add),
+                      label: const Text('Add Holiday'),
+                      onPressed: _isAdding ? null : _addHoliday,
+                    ),
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Holidays List Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_month_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Declared Company Holidays',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  holidaysAsync.when(
+                    data: (holidays) {
+                      if (holidays.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              'No declared holidays found.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: holidays.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final h = holidays[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.event,
+                                color:
+                                    Theme.of(context).colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            title: Text(
+                              h.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              '${h.date} • ${h.type}',
+                              style: TextStyle(
+                                color: Theme.of(context).hintColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () => _deleteHoliday(h),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    error: (e, _) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          ErrorHandler.getUserMessage(e),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _SitesList extends ConsumerStatefulWidget {
-  final List<Site> sites;
-  const _SitesList({required this.sites});
-  @override
-  ConsumerState<_SitesList> createState() => _SitesListState();
-}
+// ==========================================
+// 3. WORK SITES TAB
+// ==========================================
+class _WorkSitesTab extends ConsumerWidget {
+  const _WorkSitesTab();
 
-class _SitesListState extends ConsumerState<_SitesList> {
-  Future<void> _deleteSite(String id) async {
-    try {
-      await ref.read(settingsServiceProvider).deleteSite(id);
-      ref.invalidate(sitesProvider);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
-    }
-  }
-
-  void _showSiteModal([Site? site]) {
-    final _nameCtrl = TextEditingController(text: site?.name);
-    final _latCtrl = TextEditingController(text: site?.latitude.toString());
-    final _lngCtrl = TextEditingController(text: site?.longitude.toString());
-    final _radiusCtrl = TextEditingController(text: site?.radiusMeters?.toString() ?? '500');
-    final _addressCtrl = TextEditingController(text: site?.address);
+  void _showSiteModal(
+    BuildContext context,
+    WidgetRef ref, [
+    Site? site,
+  ]) {
+    final nameCtrl = TextEditingController(text: site?.name);
+    final latCtrl = TextEditingController(
+      text: site?.latitude.toString() ?? '',
+    );
+    final lngCtrl = TextEditingController(
+      text: site?.longitude.toString() ?? '',
+    );
+    final radiusCtrl = TextEditingController(
+      text: site?.radiusMeters?.toString() ?? '500',
+    );
+    final addressCtrl = TextEditingController(text: site?.address ?? '');
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         title: Text(site == null ? 'Create Work Site' : 'Edit Work Site'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Site Name')),
-              const SizedBox(height: 8),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Site Name'),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: _latCtrl, decoration: const InputDecoration(labelText: 'Latitude'))),
+                  Expanded(
+                    child: TextField(
+                      controller: latCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Latitude'),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: _lngCtrl, decoration: const InputDecoration(labelText: 'Longitude'))),
+                  Expanded(
+                    child: TextField(
+                      controller: lngCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Longitude'),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              TextField(controller: _radiusCtrl, decoration: const InputDecoration(labelText: 'Radius (m)')),
-              const SizedBox(height: 8),
-              TextField(controller: _addressCtrl, decoration: const InputDecoration(labelText: 'Address')),
+              const SizedBox(height: 12),
+              TextField(
+                controller: radiusCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Allowed Radius (Meters)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: addressCtrl,
+                decoration: const InputDecoration(labelText: 'Address'),
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
             onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
               final payload = {
-                'name': _nameCtrl.text,
-                'latitude': double.tryParse(_latCtrl.text) ?? 0,
-                'longitude': double.tryParse(_lngCtrl.text) ?? 0,
-                'radiusMeters': int.tryParse(_radiusCtrl.text) ?? 500,
-                'address': _addressCtrl.text,
+                'name': nameCtrl.text.trim(),
+                'latitude': double.tryParse(latCtrl.text) ?? 0,
+                'longitude': double.tryParse(lngCtrl.text) ?? 0,
+                'radiusMeters': int.tryParse(radiusCtrl.text) ?? 500,
+                'address': addressCtrl.text.trim(),
               };
               try {
                 if (site == null) {
                   await ref.read(settingsServiceProvider).addSite(payload);
                 } else {
-                  await ref.read(settingsServiceProvider).updateSite(site.id, payload);
+                  await ref
+                      .read(settingsServiceProvider)
+                      .updateSite(site.id, payload);
                 }
                 ref.invalidate(sitesProvider);
-                if (mounted) Navigator.pop(context);
+                if (dialogCtx.mounted) {
+                  Navigator.pop(dialogCtx);
+                  SnackbarUtils.showSuccess(
+                    dialogCtx,
+                    site == null ? 'Site created' : 'Site updated',
+                  );
+                }
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e))));
+                if (dialogCtx.mounted) {
+                  SnackbarUtils.handleApiError(dialogCtx, e);
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteSite(
+    BuildContext context,
+    WidgetRef ref,
+    Site site,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Work Site'),
+        content: Text('Are you sure you want to delete "${site.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VelocityColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ref.read(settingsServiceProvider).deleteSite(site.id);
+        ref.invalidate(sitesProvider);
+        if (context.mounted) {
+          SnackbarUtils.showSuccess(context, 'Site deleted successfully');
+        }
+      } catch (e) {
+        if (context.mounted) SnackbarUtils.handleApiError(context, e);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sitesAsync = ref.watch(sitesProvider);
+
+    return SingleChildScrollView(
+      padding: AppScaffold.getScrollPadding(
+        context,
+        basePadding: const EdgeInsets.all(16.0),
+      ),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Office Geofence & Sites',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Authorized locations for GPS punch-in',
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add Site'),
+                    onPressed: () => _showSiteModal(context, ref),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              sitesAsync.when(
+                data: (sites) {
+                  if (sites.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'No work sites configured yet.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: sites.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final s = sites[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.location_on,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          s.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          'Radius: ${s.radiusMeters ?? 500}m • Lat: ${s.latitude.toStringAsFixed(4)}, Lng: ${s.longitude.toStringAsFixed(4)}',
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () =>
+                                  _showSiteModal(context, ref, s),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () =>
+                                  _deleteSite(context, ref, s),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (e, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      ErrorHandler.getUserMessage(e),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 4. LOCATION LEAVE POLICIES TAB
+// ==========================================
+class _LocationPoliciesTab extends ConsumerWidget {
+  const _LocationPoliciesTab();
+
+  void _showEditPolicyModal(
+    BuildContext context,
+    WidgetRef ref,
+    LocationPolicy policy,
+  ) {
+    final quotaCtrl = TextEditingController(
+      text: policy.monthlyPaidLeaveQuota.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit Leave Quota: ${policy.location}'),
+        content: TextField(
+          controller: quotaCtrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Monthly Paid Leave Quota',
+            helperText: 'Number of paid leaves allowed per month',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
+            onPressed: () async {
+              final quota = int.tryParse(quotaCtrl.text);
+              if (quota == null) return;
+              try {
+                await ref
+                    .read(settingsServiceProvider)
+                    .updateLocationPolicy(policy.location, quota);
+                ref.invalidate(locationPoliciesProvider);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  SnackbarUtils.showSuccess(ctx, 'Policy updated');
+                }
+              } catch (e) {
+                if (ctx.mounted) SnackbarUtils.handleApiError(ctx, e);
               }
             },
             child: const Text('Save'),
@@ -370,110 +1043,124 @@ class _SitesListState extends ConsumerState<_SitesList> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Work Site Locations', style: Theme.of(context).textTheme.titleLarge),
-                ElevatedButton.icon(icon: const Icon(Icons.add), label: const Text('Add Site'), onPressed: _showSiteModal),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (widget.sites.isEmpty)
-              const Text('No sites configured.', style: TextStyle(color: Colors.grey))
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: widget.sites.length,
-                itemBuilder: (context, index) {
-                  final s = widget.sites[index];
-                  return ListTile(
-                    title: Text(s.name),
-                    subtitle: Text('Lat: ${s.latitude}, Lng: ${s.longitude} | Radius: ${s.radiusMeters}m'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(icon: const Icon(Icons.edit), onPressed: () => _showSiteModal(s)),
-                        IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteSite(s.id)),
-                      ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final policiesAsync = ref.watch(locationPoliciesProvider);
+
+    return SingleChildScrollView(
+      padding: AppScaffold.getScrollPadding(
+        context,
+        basePadding: const EdgeInsets.all(16.0),
+      ),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.policy_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Location-Specific Leave Quotas',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Monthly paid leave allocations assigned per regional office.',
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              policiesAsync.when(
+                data: (policies) {
+                  if (policies.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'No location policies configured.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: policies.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final p = policies[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.place_outlined,
+                            color:
+                                Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          p.location,
+                          style:
+                              const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          'Monthly Paid Quota: ${p.monthlyPaidLeaveQuota} Days',
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () =>
+                              _showEditPolicyModal(context, ref, p),
+                        ),
+                      );
+                    },
                   );
                 },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (e, _) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      ErrorHandler.getUserMessage(e),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PoliciesList extends ConsumerStatefulWidget {
-  final List<LocationPolicy> policies;
-  const _PoliciesList({required this.policies});
-  @override
-  ConsumerState<_PoliciesList> createState() => _PoliciesListState();
-}
-
-class _PoliciesListState extends ConsumerState<_PoliciesList> {
-  final _locCtrl = TextEditingController();
-  final _quotaCtrl = TextEditingController();
-  bool _isLoading = false;
-
-  Future<void> _savePolicy() async {
-    if (_locCtrl.text.isEmpty || _quotaCtrl.text.isEmpty) return;
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(settingsServiceProvider).updateLocationPolicy(_locCtrl.text.toUpperCase(), int.parse(_quotaCtrl.text));
-      _locCtrl.clear();
-      _quotaCtrl.clear();
-      ref.invalidate(locationPoliciesProvider);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Location-based Leave Quota Policies', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: widget.policies.length,
-              itemBuilder: (context, index) {
-                final p = widget.policies[index];
-                return ListTile(
-                  title: Text(p.location),
-                  subtitle: Text('Monthly Paid Leave Quota: ${p.monthlyPaidLeaveQuota}'),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: TextField(controller: _locCtrl, decoration: const InputDecoration(labelText: 'Location Name (e.g. KERALA)'))),
-                const SizedBox(width: 8),
-                Expanded(child: TextField(controller: _quotaCtrl, decoration: const InputDecoration(labelText: 'Monthly Quota'), keyboardType: TextInputType.number)),
-                const SizedBox(width: 8),
-                ElevatedButton(onPressed: _isLoading ? null : _savePolicy, child: const Text('Add / Update')),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

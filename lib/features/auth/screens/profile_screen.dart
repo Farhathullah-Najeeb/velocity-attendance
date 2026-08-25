@@ -2,7 +2,6 @@ import 'package:auto_route/auto_route.dart';
 import '../../../core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../../admin/services/settings_service.dart';
 import '../../../models/settings.dart';
@@ -82,176 +81,174 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final settingsAsync = ref.watch(profileSettingsProvider);
 
-    return Scaffold(
-      backgroundColor: AppTheme.lightBackground,
-      appBar: MediaQuery.of(context).size.width > 800 ? AppBar(
-        title: const Text('My Profile', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ) : null,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth > 800;
-            return Flex(
-              direction: isDesktop ? Axis.horizontal : Axis.vertical,
+    final leftColumn = Column(
+      children: [
+        // Profile Card
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 16),
+                Text(user.name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                  child: Text(user.role, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+                const SizedBox(height: 32),
+                _ProfileDetailRow(icon: Icons.email, label: 'Email Address', value: user.email, hasCopy: true, copied: _copied, onCopy: () => _handleCopyEmail(user.email)),
+                const Divider(),
+                _ProfileDetailRow(icon: Icons.work, label: 'Department', value: user.department ?? 'EMPLOYEE'),
+                const Divider(),
+                _ProfileDetailRow(icon: Icons.security, label: 'System Authorization', value: user.role == 'EMPLOYEE' ? 'Regular Employee' : 'Administrator'),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Change Password Card
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: isDesktop ? 1 : 0,
-                  child: Column(
-                    children: [
-                      // Profile Card
-                      Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            children: [
-                              CircleAvatar(
-                                radius: 48,
-                                backgroundColor: AppTheme.primaryRed.withValues(alpha: 0.1),
-                                foregroundColor: AppTheme.primaryRed,
-                                child: Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(user.name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(color: AppTheme.primaryRed.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                                child: Text(user.role, style: const TextStyle(color: AppTheme.primaryRed, fontWeight: FontWeight.bold, fontSize: 12)),
-                              ),
-                              const SizedBox(height: 32),
-                              _ProfileDetailRow(icon: Icons.email, label: 'Email Address', value: user.email, hasCopy: true, copied: _copied, onCopy: () => _handleCopyEmail(user.email)),
-                              const Divider(),
-                              _ProfileDetailRow(icon: Icons.work, label: 'Department', value: user.department ?? 'EMPLOYEE'),
-                              const Divider(),
-                              _ProfileDetailRow(icon: Icons.security, label: 'System Authorization', value: user.role == 'EMPLOYEE' ? 'Regular Employee' : 'Administrator'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Change Password Card
-                      Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.vpn_key, color: AppTheme.primaryRed),
-                                  const SizedBox(width: 12),
-                                  Text('Change Password', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              TextField(
-                                controller: _currentPasswordCtrl,
-                                obscureText: true,
-                                decoration: const InputDecoration(labelText: 'Current Password', border: OutlineInputBorder()),
-                              ),
-                              const SizedBox(height: 16),
-                              TextField(
-                                controller: _newPasswordCtrl,
-                                obscureText: true,
-                                decoration: const InputDecoration(labelText: 'New Password (min. 6 chars)', border: OutlineInputBorder()),
-                              ),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryRed,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                  ),
-                                  onPressed: _pwdLoading ? null : _handleChangePassword,
-                                  child: _pwdLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text('Update Password'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                Row(
+                  children: [
+                    Icon(Icons.vpn_key, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Text('Change Password', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
                 ),
-                if (isDesktop) const SizedBox(width: 24),
-                if (!isDesktop) const SizedBox(height: 24),
-                // Policy Settings Card
-                Expanded(
-                  flex: isDesktop ? 1 : 0,
-                  child: Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.schedule, color: AppTheme.primaryRed),
-                              const SizedBox(width: 12),
-                              Expanded(child: Text('Standard Office Policies', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'These limits are configured by the administration and determine late-arrival and early-checkout exceptions.',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 24),
-                          settingsAsync.when(
-                            data: (settings) => Column(
-                              children: [
-                                _PolicyItemBox(icon: Icons.access_time, color: Colors.blue, label: 'Shift Start Time', value: _formatTime12h(settings.officeStartTime)),
-                                const SizedBox(height: 16),
-                                _PolicyItemBox(icon: Icons.coffee, color: Colors.orange, label: 'Shift End Time', value: _formatTime12h(settings.officeEndTime)),
-                                const SizedBox(height: 16),
-                                _PolicyItemBox(icon: Icons.warning, color: Colors.purple, label: 'Grace Period', value: '${settings.gracePeriod} Minutes'),
-                              ],
-                            ),
-                            loading: () => const Center(child: CircularProgressIndicator()),
-                            error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
-                          ),
-                          const SizedBox(height: 32),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.info_outline, color: Colors.orange.shade800),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Arriving after Shift Start + Grace Period automatically marks your attendance as Late. Leaving before Shift End marks it as Early Checkout, requesting administrative approval.',
-                                    style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _currentPasswordCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Current Password', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _newPasswordCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'New Password (min. 6 chars)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
+                    onPressed: _pwdLoading ? null : _handleChangePassword,
+                    child: _pwdLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text('Update Password'),
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ),
         ),
+      ],
+    );
+
+    final rightColumn = Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Standard Office Policies', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'These limits are configured by the administration and determine late-arrival and early-checkout exceptions.',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            settingsAsync.when(
+              data: (settings) => Column(
+                children: [
+                  _PolicyItemBox(icon: Icons.access_time, color: Colors.blue, label: 'Shift Start Time', value: _formatTime12h(settings.officeStartTime)),
+                  const SizedBox(height: 16),
+                  _PolicyItemBox(icon: Icons.coffee, color: Colors.orange, label: 'Shift End Time', value: _formatTime12h(settings.officeEndTime)),
+                  const SizedBox(height: 16),
+                  _PolicyItemBox(icon: Icons.warning, color: Colors.purple, label: 'Grace Period', value: '${settings.gracePeriod} Minutes'),
+                ],
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => Text(ErrorHandler.getUserMessage(e)),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange.shade800),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Arriving after Shift Start + Grace Period automatically marks your attendance as Late. Leaving before Shift End marks it as Early Checkout, requesting administrative approval.',
+                      style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth > 800;
+          if (isDesktop) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: leftColumn),
+                const SizedBox(width: 24),
+                Expanded(child: rightColumn),
+              ],
+            );
+          } else {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                leftColumn,
+                const SizedBox(height: 24),
+                rightColumn,
+              ],
+            );
+          }
+        },
       ),
     );
   }

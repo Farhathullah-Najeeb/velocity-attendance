@@ -19,9 +19,9 @@ class LeaveService {
 
   Future<List<Leave>> getLeaves({String? status, String? type, String? employeeId}) async {
     final response = await _dio.get('/leaves', queryParameters: {
-      if (status != null) 'status': status,
-      if (type != null) 'type': type,
-      if (employeeId != null) 'employeeId': employeeId,
+      'status': ?status,
+      'type': ?type,
+      'employeeId': ?employeeId,
     });
     final data = response.data as List;
     return data.map((e) => Leave.fromJson(e)).toList();
@@ -58,3 +58,11 @@ class LeaveService {
 final leaveServiceProvider = Provider<LeaveService>((ref) {
   return LeaveService(ref.watch(dioProvider));
 });
+
+final employeeLeaveBalanceProvider = FutureProvider.autoDispose
+    .family<LeaveBalance, String>((ref, employeeId) {
+      if (employeeId.isEmpty) {
+        return Future.value(LeaveBalance(employee: {}, balances: {}));
+      }
+      return ref.watch(leaveServiceProvider).getLeaveBalance(employeeId);
+    });

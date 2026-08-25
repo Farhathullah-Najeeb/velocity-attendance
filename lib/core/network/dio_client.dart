@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,14 +17,13 @@ class ApiException implements Exception {
 }
 
 class CustomLogInterceptor extends Interceptor {
-  final JsonEncoder _encoder = const JsonEncoder.withIndent('  ');
   final Map<RequestOptions, DateTime> _requestTimes = {};
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     _requestTimes[options] = DateTime.now();
-    print('\n======================================================');
-    print('→ ${options.method.toUpperCase()} ${options.uri}');
+    // print('\n======================================================');
+    // print('→ ${options.method.toUpperCase()} ${options.uri}');
     
     final headers = Map<String, dynamic>.from(options.headers);
     if (headers.containsKey('Authorization')) {
@@ -34,12 +32,12 @@ class CustomLogInterceptor extends Interceptor {
         headers['Authorization'] = 'Bearer ${token.substring(7, 15)}...${token.substring(token.length - 5)}';
       }
     }
-    print('Headers: ${_prettyJson(headers)}');
+    // print('Headers: ${_prettyJson(headers)}');
     
     if (options.data != null) {
-      print('Body: ${_prettyJson(options.data)}');
+      // print('Body: ${_prettyJson(options.data)}');
     }
-    print('======================================================\n');
+    // print('======================================================\n');
     super.onRequest(options, handler);
   }
 
@@ -48,13 +46,7 @@ class CustomLogInterceptor extends Interceptor {
     final startTime = _requestTimes.remove(response.requestOptions);
     final duration = startTime != null ? DateTime.now().difference(startTime) : null;
     final durationStr = duration != null ? ' (${duration.inMilliseconds}ms)' : '';
-    
-    print('\n======================================================');
-    print('← ${response.statusCode} ${response.requestOptions.uri}$durationStr');
-    if (response.data != null) {
-      print('Response: ${_prettyJson(response.data)}');
-    }
-    print('======================================================\n');
+    debugPrint('DIO [${response.statusCode}] ${response.requestOptions.uri}$durationStr');
     super.onResponse(response, handler);
   }
 
@@ -63,38 +55,8 @@ class CustomLogInterceptor extends Interceptor {
     final startTime = _requestTimes.remove(err.requestOptions);
     final duration = startTime != null ? DateTime.now().difference(startTime) : null;
     final durationStr = duration != null ? ' (${duration.inMilliseconds}ms)' : '';
-    
-    print('\n======================================================');
-    print('❌ ERROR ← ${err.response?.statusCode ?? err.type.name} ${err.requestOptions.uri}$durationStr');
-    
-    if (err.error is ApiException) {
-      print('Parsed Message: ${(err.error as ApiException).message}');
-    } else {
-      print('Raw Error: ${err.message}');
-    }
-
-    if (err.response?.data != null) {
-      print('Response Body: ${_prettyJson(err.response?.data)}');
-    }
-    print('======================================================\n');
+    debugPrint('DIO ERROR [${err.response?.statusCode ?? err.type.name}] ${err.requestOptions.uri}$durationStr: ${err.message}');
     super.onError(err, handler);
-  }
-
-  String _prettyJson(dynamic data) {
-    if (data == null) return 'null';
-    try {
-      if (data is String) {
-        // Only try to decode if it looks like JSON
-        if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
-          final parsed = jsonDecode(data);
-          return _encoder.convert(parsed);
-        }
-        return data;
-      }
-      return _encoder.convert(data);
-    } catch (e) {
-      return data.toString();
-    }
   }
 }
 
@@ -140,12 +102,20 @@ final dioProvider = Provider<Dio>((ref) {
               }
               break;
             case 401:
-              userFriendlyMessage = 'Your session has expired. Please log in again.';
+              if (responseData is Map && responseData['message'] != null) {
+                userFriendlyMessage = responseData['message'].toString();
+              } else {
+                userFriendlyMessage = 'Your session has expired. Please log in again.';
+              }
               // Trigger auto-logout via callback to prevent import cycles
               if (onUnauthorizedCallback != null) onUnauthorizedCallback!();
               break;
             case 403:
-              userFriendlyMessage = 'You don\'t have permission for this action.';
+              if (responseData is Map && responseData['message'] != null) {
+                userFriendlyMessage = responseData['message'].toString();
+              } else {
+                userFriendlyMessage = 'You don\'t have permission for this action.';
+              }
               break;
             case 404:
               userFriendlyMessage = 'This item could not be found — it may have been removed.';

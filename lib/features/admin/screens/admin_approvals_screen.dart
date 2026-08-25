@@ -1,12 +1,12 @@
 import 'package:auto_route/auto_route.dart';
-import '../../../core/utils/error_handler.dart';
-import '../../shared/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../leaves/services/leave_service.dart';
 import '../../../models/leave.dart';
+import '../../../core/utils/snackbar_utils.dart';
+import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/states.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/velocity_colors.dart';
 
 final pendingLeavesProvider = FutureProvider.autoDispose<List<Leave>>((ref) {
   return ref.watch(leaveServiceProvider).getLeaves(status: 'PENDING');
@@ -14,7 +14,7 @@ final pendingLeavesProvider = FutureProvider.autoDispose<List<Leave>>((ref) {
 
 @RoutePage()
 class AdminApprovalsScreen extends ConsumerWidget {
-  const AdminApprovalsScreen({Key? key}) : super(key: key);
+  const AdminApprovalsScreen({super.key});
 
   void _showApprovalDialog(
     BuildContext context,
@@ -22,7 +22,7 @@ class AdminApprovalsScreen extends ConsumerWidget {
     Leave leave,
     bool isApprove,
   ) {
-    final _remarksController = TextEditingController();
+    final remarksController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -30,7 +30,7 @@ class AdminApprovalsScreen extends ConsumerWidget {
           children: [
             Icon(
               isApprove ? Icons.check_circle : Icons.cancel,
-              color: isApprove ? Colors.green : Colors.red,
+              color: isApprove ? VelocityColors.success : VelocityColors.error,
             ),
             const SizedBox(width: 8),
             Text(isApprove ? 'Approve Leave' : 'Reject Leave'),
@@ -45,7 +45,7 @@ class AdminApprovalsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _remarksController,
+              controller: remarksController,
               decoration: const InputDecoration(
                 labelText: 'Remarks (Optional)',
                 hintText: 'Add a note for the employee...',
@@ -61,37 +61,34 @@ class AdminApprovalsScreen extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isApprove ? Colors.green : Colors.red,
+              backgroundColor: isApprove
+                  ? VelocityColors.success
+                  : VelocityColors.error,
+              foregroundColor: VelocityColors.baseWhite,
             ),
             onPressed: () async {
               try {
                 if (isApprove) {
                   await ref
                       .read(leaveServiceProvider)
-                      .approveLeave(leave.id, _remarksController.text);
+                      .approveLeave(leave.id, remarksController.text);
                 } else {
                   await ref
                       .read(leaveServiceProvider)
-                      .rejectLeave(leave.id, _remarksController.text);
+                      .rejectLeave(leave.id, remarksController.text);
                 }
 
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Leave request ${isApprove ? 'approved' : 'rejected'} successfully',
-                      ),
-                      backgroundColor: isApprove ? Colors.green : Colors.red,
-                    ),
+                  SnackbarUtils.showSuccess(
+                    context,
+                    'Leave request ${isApprove ? 'approved' : 'rejected'} successfully',
                   );
                 }
                 ref.invalidate(pendingLeavesProvider);
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e))));
+                  SnackbarUtils.handleApiError(context, e);
                 }
               }
             },
@@ -121,7 +118,10 @@ class AdminApprovalsScreen extends ConsumerWidget {
               );
             }
             return ListView.builder(
-              padding: AppScaffold.getScrollPadding(context, basePadding: const EdgeInsets.all(16)),
+              padding: AppScaffold.getScrollPadding(
+                context,
+                basePadding: const EdgeInsets.all(16),
+              ),
               itemCount: leaves.length,
               itemBuilder: (context, index) {
                 final leave = leaves[index];
@@ -135,30 +135,49 @@ class AdminApprovalsScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryRed.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '${leave.type} LEAVE',
-                                style: const TextStyle(
-                                  color: AppTheme.primaryRed,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    leave.employeeId is Map
+                                        ? (leave.employeeId['name'] ?? 'Unknown Employee')
+                                        : 'Employee ID: ${leave.employeeId}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '${leave.type} LEAVE',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const Text(
                               'PENDING',
                               style: TextStyle(
-                                color: Colors.orange,
+                                color: VelocityColors.warning,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -168,10 +187,10 @@ class AdminApprovalsScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.calendar_today,
                               size: 16,
-                              color: Colors.grey,
+                              color: Theme.of(context).unselectedWidgetColor,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -185,7 +204,9 @@ class AdminApprovalsScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           leave.reason,
-                          style: TextStyle(color: Colors.grey.shade800),
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
                         ),
                         const Divider(height: 24),
                         Row(
@@ -198,10 +219,16 @@ class AdminApprovalsScreen extends ConsumerWidget {
                                 leave,
                                 false,
                               ),
-                              icon: const Icon(Icons.close, color: Colors.red),
-                              label: const Text(
+                              icon: Icon(
+                                Icons.close,
+                                color: VelocityColors.error,
+                              ),
+                              label: Text(
                                 'Reject',
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(color: VelocityColors.error),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: VelocityColors.error,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -215,8 +242,8 @@ class AdminApprovalsScreen extends ConsumerWidget {
                               icon: const Icon(Icons.check, size: 18),
                               label: const Text('Approve'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
+                                backgroundColor: VelocityColors.success,
+                                foregroundColor: VelocityColors.baseWhite,
                               ),
                             ),
                           ],

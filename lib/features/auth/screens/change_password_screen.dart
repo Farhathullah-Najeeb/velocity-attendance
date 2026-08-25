@@ -1,8 +1,6 @@
 import 'package:auto_route/auto_route.dart';
-import '../../../core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
 
 @RoutePage()
@@ -89,7 +87,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.security, size: 60, color: AppTheme.primaryRed),
+                      Icon(Icons.security, size: 60, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(height: 16),
                       Text(
                         'Update Security',

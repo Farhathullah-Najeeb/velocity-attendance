@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 
 class LoadingStateWidget extends StatelessWidget {
-  const LoadingStateWidget({Key? key}) : super(key: key);
+  const LoadingStateWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +19,10 @@ class ErrorStateWidget extends StatelessWidget {
   final VoidCallback? onRetry;
 
   const ErrorStateWidget({
-    Key? key,
+    super.key,
     required this.error,
     this.onRetry,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +32,7 @@ class ErrorStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: AppTheme.primaryRed, size: 64),
+            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 64),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',
@@ -68,13 +67,13 @@ class EmptyStateWidget extends StatelessWidget {
   final String? actionLabel;
 
   const EmptyStateWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.message,
     this.icon = Icons.inbox,
     this.onAction,
     this.actionLabel,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

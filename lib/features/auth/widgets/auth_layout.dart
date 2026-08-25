@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../shared/widgets/velocity_logo.dart';
 
 class AuthLayout extends StatelessWidget {
@@ -30,7 +30,7 @@ class AuthLayout extends StatelessWidget {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Center(
@@ -45,7 +45,7 @@ class AuthLayout extends StatelessWidget {
 
   Widget _buildWebLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkCharcoal,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -79,7 +79,7 @@ class AuthLayout extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppTheme.darkCharcoal,
+                color: Theme.of(context).colorScheme.secondary,
               ),
           textAlign: TextAlign.center,
         ),

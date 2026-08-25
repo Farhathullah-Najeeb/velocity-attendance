@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../../core/theme/app_theme.dart';
 import 'app_scaffold.dart';
 
 class DottedBackgroundPainter extends CustomPainter {
+  final Color dividerColor;
+  DottedBackgroundPainter(this.dividerColor);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
+      ..color = dividerColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     const dotRadius = 1.2;
@@ -17,7 +19,8 @@ class DottedBackgroundPainter extends CustomPainter {
       for (double y = 0; y < size.height; y += spacing) {
         final nx = x / size.width;
         final ny = y / size.height;
-        final noise = math.sin(nx * 15) * math.cos(ny * 10) + math.sin(nx * 25);
+        final noise =
+            math.sin(nx * 15) * math.cos(ny * 10) + math.sin(nx * 25);
         if (noise > 0.3 && x > size.width * 0.3) {
           canvas.drawCircle(Offset(x, y), dotRadius, paint);
         }
@@ -29,11 +32,15 @@ class DottedBackgroundPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// A content layout used for Dashboard screens.
+/// Does NOT create a Scaffold — the AppShell's Scaffold wraps everything.
 class DashboardHeaderScaffold extends StatelessWidget {
   final Widget headerContent;
   final Widget bodyContent;
   final double headerHeight;
   final Future<void> Function()? onRefresh;
+
+  // appBar intentionally removed — the shell's Scaffold controls the AppBar.
 
   const DashboardHeaderScaffold({
     super.key,
@@ -51,14 +58,12 @@ class DashboardHeaderScaffold extends StatelessWidget {
       child: Stack(
         children: [
           // 1. Off-white background for the content area (everything below the header)
-          // We start it slightly higher than headerHeight so it sits behind the rounded corners
-          // of the header, making them visible against this lighter background.
           Positioned.fill(
-            top: headerHeight - 64, // Extends up behind the header's bottom edge
-            child: Container(color: AppTheme.lightBackground),
+            top: headerHeight - 64,
+            child: Container(color: Theme.of(context).scaffoldBackgroundColor),
           ),
 
-          // 2. Dark Navy Background Header
+          // 2. Coloured header background
           Positioned(
             top: 0,
             left: 0,
@@ -66,21 +71,25 @@ class DashboardHeaderScaffold extends StatelessWidget {
             height: headerHeight,
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.darkNavy,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(36),
                   bottomRight: Radius.circular(36),
                 ),
+                border: Border(
+                  bottom: BorderSide(color: Theme.of(context).dividerColor),
+                ),
               ),
-              child: CustomPaint(painter: DottedBackgroundPainter()),
+              child: CustomPaint(
+                painter: DottedBackgroundPainter(Theme.of(context).dividerColor),
+              ),
             ),
           ),
 
-          // 3. Foreground Content
+          // 3. Foreground content
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Content (e.g. logos, welcome text)
               SafeArea(
                 bottom: false,
                 child: Padding(
@@ -91,7 +100,6 @@ class DashboardHeaderScaffold extends StatelessWidget {
                   child: headerContent,
                 ),
               ),
-              // Body Content (e.g. stat cards, lists)
               bodyContent,
             ],
           ),
@@ -106,10 +114,10 @@ class DashboardHeaderScaffold extends StatelessWidget {
       );
     }
 
-    return AppScaffold(
-      // We set the main background to darkNavy so the top overscroll (pull to refresh) looks seamless!
-      backgroundColor: AppTheme.darkNavy,
-      body: content,
+    // Return the content directly — no nested AppScaffold/Scaffold.
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: content,
     );
   }
 }

@@ -107,6 +107,22 @@ class AdminReportsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [AdminRolesScreen]
+class AdminRolesRoute extends PageRouteInfo<void> {
+  const AdminRolesRoute({List<PageRouteInfo>? children})
+    : super(AdminRolesRoute.name, initialChildren: children);
+
+  static const String name = 'AdminRolesRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const AdminRolesScreen();
+    },
+  );
+}
+
+/// generated route for
 /// [AdminSettingsScreen]
 class AdminSettingsRoute extends PageRouteInfo<void> {
   const AdminSettingsRoute({List<PageRouteInfo>? children})
@@ -315,6 +331,38 @@ class LoginRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [NotificationsScreen]
+class NotificationsRoute extends PageRouteInfo<void> {
+  const NotificationsRoute({List<PageRouteInfo>? children})
+    : super(NotificationsRoute.name, initialChildren: children);
+
+  static const String name = 'NotificationsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const NotificationsScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [PendingApprovalScreen]
+class PendingApprovalRoute extends PageRouteInfo<void> {
+  const PendingApprovalRoute({List<PageRouteInfo>? children})
+    : super(PendingApprovalRoute.name, initialChildren: children);
+
+  static const String name = 'PendingApprovalRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PendingApprovalScreen();
+    },
+  );
+}
+
+/// generated route for
 /// [ProfileScreen]
 class ProfileRoute extends PageRouteInfo<void> {
   const ProfileRoute({List<PageRouteInfo>? children})
@@ -358,6 +406,22 @@ class RegisterRoute extends PageRouteInfo<void> {
     name,
     builder: (data) {
       return const RegisterScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [RequestOvertimeScreen]
+class RequestOvertimeRoute extends PageRouteInfo<void> {
+  const RequestOvertimeRoute({List<PageRouteInfo>? children})
+    : super(RequestOvertimeRoute.name, initialChildren: children);
+
+  static const String name = 'RequestOvertimeRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const RequestOvertimeScreen();
     },
   );
 }
@@ -412,4 +476,36 @@ class ResetPasswordRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ token.hashCode;
+}
+
+/// generated route for
+/// [SetupSuperAdminScreen]
+class SetupSuperAdminRoute extends PageRouteInfo<void> {
+  const SetupSuperAdminRoute({List<PageRouteInfo>? children})
+    : super(SetupSuperAdminRoute.name, initialChildren: children);
+
+  static const String name = 'SetupSuperAdminRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const SetupSuperAdminScreen();
+    },
+  );
+}
+
+/// generated route for
+/// [SuperAdminAdminsScreen]
+class SuperAdminAdminsRoute extends PageRouteInfo<void> {
+  const SuperAdminAdminsRoute({List<PageRouteInfo>? children})
+    : super(SuperAdminAdminsRoute.name, initialChildren: children);
+
+  static const String name = 'SuperAdminAdminsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const SuperAdminAdminsScreen();
+    },
+  );
 }

@@ -35,14 +35,28 @@ class SettingsService {
   }
 
   // Holidays
-  Future<List<Holiday>> getHolidays() async {
-    final response = await _dio.get('/holidays');
+  Future<List<Holiday>> getHolidays({String? location}) async {
+    final response = await _dio.get('/holidays', queryParameters: {
+      'location': ?location,
+    });
     final data = response.data as List;
     return data.map((e) => Holiday.fromJson(e)).toList();
   }
 
-  Future<void> addHoliday(String date, String name) async {
-    await _dio.post('/holidays', data: {'date': date, 'name': name});
+  Future<void> addHoliday({
+    required String date,
+    required String name,
+    required String type,
+    List<String>? applicableLocations,
+    String? description,
+  }) async {
+    await _dio.post('/holidays', data: {
+      'date': date,
+      'name': name,
+      'type': type,
+      'applicableLocations': ?applicableLocations,
+      'description': ?description,
+    });
   }
 
   Future<void> deleteHoliday(String id) async {
@@ -50,6 +64,10 @@ class SettingsService {
   }
 
   // Sites
+  Future<Site> getSiteById(String id) async {
+    final response = await _dio.get('/sites/$id');
+    return Site.fromJson(response.data);
+  }
   Future<List<Site>> getSites() async {
     final response = await _dio.get('/sites');
     final data = response.data as List?;

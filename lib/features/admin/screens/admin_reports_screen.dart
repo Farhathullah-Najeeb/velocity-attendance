@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import '../../../core/utils/error_handler.dart';
+import '../../../core/utils/snackbar_utils.dart';
 import '../../shared/widgets/app_scaffold.dart';
 
 import 'package:auto_route/auto_route.dart';
@@ -7,9 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import '../services/admin_service.dart';
 import '../../attendance/services/attendance_service.dart';
-import '../../../core/theme/app_theme.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -46,7 +44,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
   Future<void> _exportReport() async {
     if (_selectedReportType == 'CUSTOM' && (_startDate == null || _endDate == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a date range for custom report')));
+      SnackbarUtils.showError(context, 'Please select a date range for custom report');
       return;
     }
 
@@ -86,7 +84,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
       
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: Colors.red));
+        SnackbarUtils.handleApiError(context, e);
       }
     } finally {
       if (mounted) {
@@ -98,7 +96,6 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: MediaQuery.of(context).size.width > 800 ? AppBar(title: const Text('Export Reports')) : null,
       body: Center(
         child: SingleChildScrollView(
               padding: AppScaffold.getScrollPadding(context, basePadding: const EdgeInsets.all(24.0)),
@@ -113,7 +110,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.analytics_outlined, size: 80, color: AppTheme.primaryRed.withValues(alpha: 0.8)),
+                    Icon(Icons.analytics_outlined, size: 80, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)),
                     const SizedBox(height: 24),
                     Text(
                       'Attendance & Exceptions',
@@ -129,7 +126,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     const SizedBox(height: 32),
 
                     DropdownButtonFormField<String>(
-                      value: _selectedReportType,
+                      initialValue: _selectedReportType,
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Report Type', prefixIcon: Icon(Icons.date_range)),
                       items: const [
@@ -166,7 +163,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedFormat,
+                      initialValue: _selectedFormat,
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Export Format', prefixIcon: Icon(Icons.insert_drive_file)),
                       items: const [

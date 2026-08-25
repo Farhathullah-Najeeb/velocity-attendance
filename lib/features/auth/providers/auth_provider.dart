@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/error_handler.dart';
 import '../../../models/user.dart';
 import '../../../services/auth_service.dart';
 import '../../../core/utils/secure_storage.dart';
-import '../../../core/network/dio_client.dart';
 
 class AuthState {
   final User? user;
@@ -26,7 +24,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._authService) : super(AuthState()) {
     checkAuth();
-    onUnauthorizedCallback = logout;
   }
 
   Future<void> checkAuth() async {
@@ -46,20 +43,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> login(String email, String password) async {
-    print('AUTH DEBUG: login() called with email: $email');
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _authService.login(email, password);
       final token = response['access_token'] as String;
-      print('AUTH DEBUG: login() success, token received: ${token.substring(0, 10)}...');
       await SecureStorage.saveToken(token);
       
       final user = await _authService.getProfile();
-      print('AUTH DEBUG: getProfile() success, user: ${user.name}');
       state = state.copyWith(user: user, isLoading: false);
       return true;
     } catch (e) {
-      print('AUTH DEBUG: login() caught error: $e');
       state = state.copyWith(isLoading: false, error: 'Login failed. Please check your email and password.');
       return false;
     }

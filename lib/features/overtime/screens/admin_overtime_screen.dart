@@ -1,12 +1,11 @@
 import 'package:auto_route/auto_route.dart';
-import '../../../core/utils/error_handler.dart';
-import '../../shared/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/overtime_service.dart';
 import '../../../models/overtime.dart';
+import '../../../core/utils/snackbar_utils.dart';
+import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/states.dart';
-
 final adminOvertimeProvider = FutureProvider.autoDispose<List<Overtime>>((ref) {
   return ref.watch(overtimeServiceProvider).getAllOvertime(status: 'PENDING');
 });
@@ -74,21 +73,12 @@ class AdminOvertimeScreen extends ConsumerWidget {
                     );
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Overtime request ${isApprove ? 'approved' : 'rejected'}',
-                      ),
-                      backgroundColor: isApprove ? Colors.green : Colors.red,
-                    ),
-                  );
+                  SnackbarUtils.showSuccess(context, 'Overtime request ${isApprove ? 'approved' : 'rejected'}');
                 }
                 ref.invalidate(adminOvertimeProvider);
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(ErrorHandler.getUserMessage(e))),
-                  );
+                  SnackbarUtils.handleApiError(context, e);
                 }
               }
             },
@@ -104,7 +94,6 @@ class AdminOvertimeScreen extends ConsumerWidget {
     final asyncData = ref.watch(adminOvertimeProvider);
 
     return AppScaffold(
-      appBar: AppBar(title: const Text('Overtime Approvals')),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(adminOvertimeProvider);

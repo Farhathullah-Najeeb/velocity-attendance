@@ -21,6 +21,20 @@ class AuthService {
     return User.fromJson(response.data);
   }
 
+  Future<void> setupSuperAdmin({
+    required String name,
+    required String email,
+    required String password,
+    required String passkey,
+  }) async {
+    await _dio.post('/admin/setup-super-admin', data: {
+      'name': name,
+      'email': email,
+      'password': password,
+      'passkey': passkey,
+    });
+  }
+
   Future<void> register({
     required String name,
     required String email,
