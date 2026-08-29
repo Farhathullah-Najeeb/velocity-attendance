@@ -161,6 +161,11 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         label: 'History',
       ),
       const NavigationDestination(
+        icon: Icon(Icons.mark_email_unread_outlined),
+        selectedIcon: Icon(Icons.mark_email_unread),
+        label: 'Requests',
+      ),
+      const NavigationDestination(
         icon: Icon(Icons.timer_outlined),
         selectedIcon: Icon(Icons.timer),
         label: 'Overtime',
@@ -227,6 +232,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                   EmployeeDashboardRoute(),
                   EmployeeLeavesRoute(),
                   EmployeeHistoryRoute(),
+                  EmployeeRequestsRoute(),
                   EmployeeOvertimeRoute(),
                   ProfileRoute(),
                 ],
@@ -444,7 +450,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                leading: selectedIndex >= (isAdmin ? 4 : 3)
+                leading: selectedIndex >= (isAdmin ? 4 : 4)
                     ? IconButton(
                         icon: Icon(
                           Icons.arrow_back,
@@ -470,7 +476,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                 ],
               ),
               body: child,
-              bottomNavigationBar: selectedIndex < (isAdmin ? 4 : 3)
+              bottomNavigationBar: selectedIndex < (isAdmin ? 4 : 4)
                   ? Builder(
                       builder: (context) {
                         // The nav pill is about 90px tall from the bottom.
@@ -490,7 +496,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: destinations.take(isAdmin ? 4 : 3).toList().asMap().entries.map((entry) {
+                          children: destinations.take(isAdmin ? 4 : 4).toList().asMap().entries.map((entry) {
                             final idx = entry.key;
                             final d = entry.value;
                             final isSelected = selectedIndex == idx;

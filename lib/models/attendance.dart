@@ -6,6 +6,8 @@ class Attendance {
   final String checkInTime;
   final String? checkOutTime;
   final bool? isWFH;
+  final bool? isHolidayWork;
+  final bool? isWeekendWork;
   final int? workDurationMinutes;
   final String? formattedWorkTime;
   final int? lateMinutes;
@@ -24,6 +26,8 @@ class Attendance {
     required this.checkInTime,
     this.checkOutTime,
     this.isWFH,
+    this.isHolidayWork,
+    this.isWeekendWork,
     this.workDurationMinutes,
     this.formattedWorkTime,
     this.lateMinutes,
@@ -44,6 +48,8 @@ class Attendance {
       checkInTime: json['checkInTime'] as String? ?? '',
       checkOutTime: json['checkOutTime'] as String?,
       isWFH: json['isWFH'] as bool?,
+      isHolidayWork: json['isHolidayWork'] as bool?,
+      isWeekendWork: json['isWeekendWork'] as bool?,
       workDurationMinutes: json['workDurationMinutes'] as int?,
       formattedWorkTime: json['formattedWorkTime'] as String?,
       lateMinutes: json['lateMinutes'] as int?,

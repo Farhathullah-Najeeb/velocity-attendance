@@ -79,7 +79,8 @@ class AdminRolesScreen extends ConsumerWidget {
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            builder: (_) => AdminRoleBottomSheet(
+            constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminRoleBottomSheet(
               onSuccess: () => ref.invalidate(adminRolesListProvider),
             ),
           );
@@ -115,7 +116,8 @@ class AdminRolesScreen extends ConsumerWidget {
                         top: Radius.circular(20),
                       ),
                     ),
-                    builder: (_) => AdminRoleBottomSheet(
+                    constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminRoleBottomSheet(
                       onSuccess: () => ref.invalidate(adminRolesListProvider),
                     ),
                   );
@@ -150,7 +152,8 @@ class AdminRolesScreen extends ConsumerWidget {
                             top: Radius.circular(20),
                           ),
                         ),
-                        builder: (_) => AdminRoleBottomSheet(
+                        constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminRoleBottomSheet(
                           existingRole: role,
                           onSuccess: () =>
                               ref.invalidate(adminRolesListProvider),

@@ -18,8 +18,189 @@ final superAdminAdminsProvider = FutureProvider.autoDispose<List<User>>((ref) {
 class SuperAdminAdminsScreen extends ConsumerWidget {
   const SuperAdminAdminsScreen({super.key});
 
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 800) {
+          return _buildDesktopLayout(context, ref);
+        }
+        return _buildMobileLayout(context, ref);
+      },
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context, WidgetRef ref) {
+    final adminsAsync = ref.watch(superAdminAdminsProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: adminsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorStateWidget(
+          error: ErrorHandler.getUserMessage(e),
+          onRetry: () => ref.invalidate(superAdminAdminsProvider),
+        ),
+        data: (admins) {
+          return Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Administrators',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Manage super admins and admins for the portal.',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: VelocityColors.baseWhite,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminCreateAdminSheet(
+                            onSuccess: () => ref.invalidate(superAdminAdminsProvider),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Add Administrator'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VelocityColors.primaryRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+                Expanded(
+                  child: admins.isEmpty
+                      ? EmptyStateWidget(
+                          title: 'No Administrators',
+                          message: 'Create your first admin to help manage the organization.',
+                          icon: Icons.admin_panel_settings_outlined,
+                          actionLabel: 'Create Admin',
+                          onAction: () {},
+                        )
+                      : Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+                                dataRowMinHeight: 70,
+                                dataRowMaxHeight: 70,
+                                columns: const [
+                                  DataColumn(label: Text('NAME', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                  DataColumn(label: Text('EMAIL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                  DataColumn(label: Text('ROLE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                  DataColumn(label: Text('STATUS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                  DataColumn(label: Text('PERMISSIONS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                  DataColumn(label: Text('ACTIONS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                ],
+                                rows: admins.map((admin) {
+                                  final isActive = admin.isActive ?? true;
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              backgroundColor: VelocityColors.primaryRed.withValues(alpha: 0.1),
+                                              foregroundColor: VelocityColors.primaryRed,
+                                              child: Text(admin.name.isNotEmpty ? admin.name[0].toUpperCase() : 'A', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(admin.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                                          ],
+                                        ),
+                                      ),
+                                      DataCell(Text(admin.email, style: const TextStyle(color: Colors.black87))),
+                                      DataCell(_Badge(label: admin.role.replaceAll('_', ' '), color: VelocityColors.primaryRed)),
+                                      DataCell(_Badge(label: isActive ? 'Active' : 'Inactive', color: isActive ? VelocityColors.success : VelocityColors.error)),
+                                      DataCell(
+                                        admin.permissions != null && admin.permissions!.isNotEmpty
+                                            ? _Badge(label: '${admin.permissions!.length} permissions', color: VelocityColors.textDark)
+                                            : const Text('-'),
+                                      ),
+                                      DataCell(
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined),
+                                          color: Colors.blue.shade700,
+                                          onPressed: () {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor: VelocityColors.baseWhite,
+                                              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                                              constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminEditAdminSheet(
+                                                admin: admin,
+                                                onSuccess: () => ref.invalidate(superAdminAdminsProvider),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref) {
     final adminsAsync = ref.watch(superAdminAdminsProvider);
 
     return AppScaffold(
@@ -32,7 +213,8 @@ class SuperAdminAdminsScreen extends ConsumerWidget {
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            builder: (_) => AdminCreateAdminSheet(
+            constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminCreateAdminSheet(
               onSuccess: () => ref.invalidate(superAdminAdminsProvider),
             ),
           );
@@ -67,7 +249,8 @@ class SuperAdminAdminsScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(20)),
                     ),
-                    builder: (_) => AdminCreateAdminSheet(
+                    constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminCreateAdminSheet(
                       onSuccess: () =>
                           ref.invalidate(superAdminAdminsProvider),
                     ),
@@ -103,7 +286,8 @@ class SuperAdminAdminsScreen extends ConsumerWidget {
                           borderRadius:
                               BorderRadius.vertical(top: Radius.circular(20)),
                         ),
-                        builder: (_) => AdminEditAdminSheet(
+                        constraints: const BoxConstraints(maxWidth: 600),
+builder: (_) => AdminEditAdminSheet(
                           admin: admin,
                           onSuccess: () =>
                               ref.invalidate(superAdminAdminsProvider),
@@ -193,6 +377,7 @@ class SuperAdminAdminsScreen extends ConsumerWidget {
     );
   }
 }
+
 
 class _Badge extends StatelessWidget {
   final String label;

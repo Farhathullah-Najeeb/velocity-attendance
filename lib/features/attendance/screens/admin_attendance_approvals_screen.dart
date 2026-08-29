@@ -14,6 +14,14 @@ final pendingAttendanceProvider =
       return ref.watch(attendanceServiceProvider).getPendingApprovals();
     });
 
+final pendingWfhProvider = FutureProvider.autoDispose<List<dynamic>>((ref) {
+  return ref.watch(attendanceServiceProvider).getWfhRequests(status: 'PENDING');
+});
+
+final pendingRegularizationProvider = FutureProvider.autoDispose<List<dynamic>>((ref) {
+  return ref.watch(attendanceServiceProvider).getPendingRegularizations();
+});
+
 @RoutePage()
 class AdminAttendanceApprovalsScreen extends ConsumerStatefulWidget {
   const AdminAttendanceApprovalsScreen({super.key});
@@ -25,6 +33,7 @@ class AdminAttendanceApprovalsScreen extends ConsumerStatefulWidget {
 
 class _AdminAttendanceApprovalsScreenState
     extends ConsumerState<AdminAttendanceApprovalsScreen> {
+  int _selectedTabIndex = 0; // 0 for Exceptions, 1 for WFH, 2 for Regularizations
   String _selectedFilter = 'ALL'; // 'ALL', 'LATE', 'EARLY'
 
   void _showApprovalDialog(
@@ -242,10 +251,59 @@ class _AdminAttendanceApprovalsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final asyncData = ref.watch(pendingAttendanceProvider);
-
     return AppScaffold(
-      body: RefreshIndicator(
+      body: Column(
+        children: [
+          Container(
+            color: Theme.of(context).colorScheme.surface,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _TabButton(
+                    title: 'Exceptions',
+                    isSelected: _selectedTabIndex == 0,
+                    onTap: () => setState(() => _selectedTabIndex = 0),
+                  ),
+                ),
+                Expanded(
+                  child: _TabButton(
+                    title: 'WFH',
+                    isSelected: _selectedTabIndex == 1,
+                    onTap: () => setState(() => _selectedTabIndex = 1),
+                  ),
+                ),
+                Expanded(
+                  child: _TabButton(
+                    title: 'Regularization',
+                    isSelected: _selectedTabIndex == 2,
+                    onTap: () => setState(() => _selectedTabIndex = 2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _buildSelectedTab(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedTab() {
+    if (_selectedTabIndex == 0) {
+      return _buildExceptionsTab();
+    } else if (_selectedTabIndex == 1) {
+      return const _WfhApprovalsTab();
+    } else {
+      return const _RegularizationApprovalsTab();
+    }
+  }
+
+  Widget _buildExceptionsTab() {
+    final asyncData = ref.watch(pendingAttendanceProvider);
+    return RefreshIndicator(
         onRefresh: () async => ref.invalidate(pendingAttendanceProvider),
         child: asyncData.when(
           data: (records) {
@@ -444,6 +502,166 @@ class _AdminAttendanceApprovalsScreenState
             onRetry: () => ref.invalidate(pendingAttendanceProvider),
           ),
         ),
+      );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TabButton({
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WfhApprovalsTab extends ConsumerWidget {
+  const _WfhApprovalsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(pendingWfhProvider);
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(pendingWfhProvider),
+      child: asyncData.when(
+        data: (requests) {
+          if (requests.isEmpty) {
+            return const Center(child: Text('No pending WFH requests.'));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: requests.length,
+            itemBuilder: (context, index) {
+              final req = requests[index];
+              return Card(
+                child: ListTile(
+                  title: Text('Employee: ${req['employeeId']?['name'] ?? 'Unknown'} | Date: ${req['dateStr']}'),
+                  subtitle: Text('Reason: ${req['reason']}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.check, color: Colors.green),
+                        onPressed: () async {
+                          try {
+                            await ref.read(attendanceServiceProvider).approveWfhRequest(req['_id'], 'Approved by Admin');
+                            ref.invalidate(pendingWfhProvider);
+                            if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Approved');
+                          } catch (e) {
+                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () async {
+                           try {
+                            await ref.read(attendanceServiceProvider).rejectWfhRequest(req['_id'], 'Rejected by Admin');
+                            ref.invalidate(pendingWfhProvider);
+                            if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Rejected');
+                          } catch (e) {
+                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+}
+
+class _RegularizationApprovalsTab extends ConsumerWidget {
+  const _RegularizationApprovalsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(pendingRegularizationProvider);
+    return RefreshIndicator(
+      onRefresh: () async => ref.invalidate(pendingRegularizationProvider),
+      child: asyncData.when(
+        data: (requests) {
+          if (requests.isEmpty) {
+            return const Center(child: Text('No pending regularization requests.'));
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: requests.length,
+            itemBuilder: (context, index) {
+              final req = requests[index];
+              return Card(
+                child: ListTile(
+                  title: Text('Employee: ${req['employeeId']?['name'] ?? 'Unknown'} | Date: ${req['dateStr']} | Type: ${req['type']}'),
+                  subtitle: Text('Reason: ${req['reason']}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.check, color: Colors.green),
+                        onPressed: () async {
+                          try {
+                            await ref.read(attendanceServiceProvider).approveRegularizationRequest(req['_id'], 'Approved by Admin');
+                            ref.invalidate(pendingRegularizationProvider);
+                            if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Approved');
+                          } catch (e) {
+                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () async {
+                           try {
+                            await ref.read(attendanceServiceProvider).rejectRegularizationRequest(req['_id'], 'Rejected by Admin');
+                            ref.invalidate(pendingRegularizationProvider);
+                            if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Rejected');
+                          } catch (e) {
+                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
   }
@@ -990,11 +1208,9 @@ class _PenaltyOptionTile extends StatelessWidget {
                 ],
               ),
             ),
-            Radio<bool>(
-              value: true,
-              groupValue: isSelected,
-              onChanged: (_) => onTap(),
-              activeColor: color,
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: isSelected ? color : Theme.of(context).unselectedWidgetColor,
             ),
           ],
         ),

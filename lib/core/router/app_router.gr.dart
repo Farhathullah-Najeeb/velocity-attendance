@@ -283,6 +283,22 @@ class EmployeeProfileEditRouteArgs {
 }
 
 /// generated route for
+/// [EmployeeRequestsScreen]
+class EmployeeRequestsRoute extends PageRouteInfo<void> {
+  const EmployeeRequestsRoute({List<PageRouteInfo>? children})
+    : super(EmployeeRequestsRoute.name, initialChildren: children);
+
+  static const String name = 'EmployeeRequestsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const EmployeeRequestsScreen();
+    },
+  );
+}
+
+/// generated route for
 /// [ForgotPasswordScreen]
 class ForgotPasswordRoute extends PageRouteInfo<void> {
   const ForgotPasswordRoute({List<PageRouteInfo>? children})

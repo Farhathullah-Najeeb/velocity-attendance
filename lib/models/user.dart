@@ -6,6 +6,9 @@ class User {
   final String? department;
   final String? location;
   final dynamic assignedSite;
+  final String? staffType; // 'OFFICE' | 'SITE'
+  final String? officeStartTime;
+  final String? officeEndTime;
   final bool? isActive;
   final bool? isApproved;
   final List<String>? permissions;
@@ -20,6 +23,9 @@ class User {
     this.department,
     this.location,
     this.assignedSite,
+    this.staffType,
+    this.officeStartTime,
+    this.officeEndTime,
     this.isActive,
     this.isApproved,
     this.permissions,
@@ -36,6 +42,9 @@ class User {
       department: json['department'] as String?,
       location: json['location'] as String?,
       assignedSite: json['assignedSite'],
+      staffType: json['staffType'] as String?,
+      officeStartTime: json['officeStartTime'] as String?,
+      officeEndTime: json['officeEndTime'] as String?,
       isActive: json['isActive'] as bool?,
       isApproved: json['isApproved'] as bool?,
       permissions: (json['permissions'] as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -53,6 +62,9 @@ class User {
       'department': department,
       'location': location,
       'assignedSite': assignedSite,
+      'staffType': staffType,
+      'officeStartTime': officeStartTime,
+      'officeEndTime': officeEndTime,
       'isActive': isActive,
       'isApproved': isApproved,
       'permissions': permissions,

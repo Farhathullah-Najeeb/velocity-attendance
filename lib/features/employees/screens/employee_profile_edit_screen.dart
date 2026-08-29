@@ -38,6 +38,9 @@ class _EmployeeProfileEditScreenState
   late bool _isActive;
   String? _selectedRoleId;
   String? _selectedSiteId;
+  String? _staffType;
+  TimeOfDay? _officeStartTime;
+  TimeOfDay? _officeEndTime;
   bool _isLoading = false;
 
   @override
@@ -50,6 +53,19 @@ class _EmployeeProfileEditScreenState
         TextEditingController(text: widget.employee.location);
     _isActive = widget.employee.isActive ?? true;
     _selectedSiteId = widget.employee.assignedSite;
+    _staffType = widget.employee.staffType ?? 'OFFICE';
+    if (widget.employee.officeStartTime != null) {
+      final parts = widget.employee.officeStartTime!.split(':');
+      if (parts.length == 2) {
+        _officeStartTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
+    }
+    if (widget.employee.officeEndTime != null) {
+      final parts = widget.employee.officeEndTime!.split(':');
+      if (parts.length == 2) {
+        _officeEndTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
+    }
   }
 
   @override
@@ -121,6 +137,11 @@ class _EmployeeProfileEditScreenState
           'name': _nameController.text.trim(),
           'department': _departmentController.text.trim(),
           'location': _locationController.text.trim(),
+          'staffType': _staffType,
+          if (_officeStartTime != null)
+            'officeStartTime': '${_officeStartTime!.hour.toString().padLeft(2, '0')}:${_officeStartTime!.minute.toString().padLeft(2, '0')}',
+          if (_officeEndTime != null)
+            'officeEndTime': '${_officeEndTime!.hour.toString().padLeft(2, '0')}:${_officeEndTime!.minute.toString().padLeft(2, '0')}',
         },
       );
 
@@ -309,6 +330,68 @@ class _EmployeeProfileEditScreenState
                         ),
                         validator: (v) =>
                             v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      DropdownButtonFormField<String>(
+                        initialValue: _staffType,
+                        decoration: const InputDecoration(
+                          labelText: 'Staff Type',
+                          prefixIcon: Icon(Icons.work_outline),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'OFFICE', child: Text('OFFICE')),
+                          DropdownMenuItem(value: 'SITE', child: Text('SITE')),
+                        ],
+                        onChanged: (val) {
+                          setState(() => _staffType = val);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: _officeStartTime ?? const TimeOfDay(hour: 9, minute: 0),
+                                );
+                                if (time != null) {
+                                  setState(() => _officeStartTime = time);
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Office Start Time',
+                                  prefixIcon: Icon(Icons.access_time),
+                                ),
+                                child: Text(_officeStartTime != null ? _officeStartTime!.format(context) : 'Not Set'),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: _officeEndTime ?? const TimeOfDay(hour: 17, minute: 0),
+                                );
+                                if (time != null) {
+                                  setState(() => _officeEndTime = time);
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Office End Time',
+                                  prefixIcon: Icon(Icons.access_time),
+                                ),
+                                child: Text(_officeEndTime != null ? _officeEndTime!.format(context) : 'Not Set'),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 

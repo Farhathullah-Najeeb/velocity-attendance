@@ -13,16 +13,19 @@ import '../services/roles_service.dart';
 import '../../../models/role.dart';
 import 'admin_role_bottom_sheet.dart';
 
-final employeesProvider = FutureProvider.family.autoDispose<List<User>, String>((ref, status) {
-  return ref.watch(employeeServiceProvider).getEmployees(status: status);
-});
+final employeesProvider = FutureProvider.family.autoDispose<List<User>, String>(
+  (ref, status) {
+    return ref.watch(employeeServiceProvider).getEmployees(status: status);
+  },
+);
 
 @RoutePage()
 class AdminEmployeesScreen extends ConsumerStatefulWidget {
   const AdminEmployeesScreen({super.key});
 
   @override
-  ConsumerState<AdminEmployeesScreen> createState() => _AdminEmployeesScreenState();
+  ConsumerState<AdminEmployeesScreen> createState() =>
+      _AdminEmployeesScreenState();
 }
 
 class _AdminEmployeesScreenState extends ConsumerState<AdminEmployeesScreen> {
@@ -33,7 +36,7 @@ class _AdminEmployeesScreenState extends ConsumerState<AdminEmployeesScreen> {
     final tabCount = isSuperAdmin ? 5 : 3;
 
     final isDesktop = MediaQuery.of(context).size.width > 800;
-    
+
     return DefaultTabController(
       length: tabCount,
       child: Column(
@@ -59,11 +62,22 @@ class _AdminEmployeesScreenState extends ConsumerState<AdminEmployeesScreen> {
               children: [
                 TabBarView(
                   children: [
-                    const _EmployeeList(status: 'APPROVED', key: PageStorageKey('APPROVED')),
-                    const _EmployeeList(status: 'PENDING', key: PageStorageKey('PENDING')),
-                    const _EmployeeList(status: 'ALL', key: PageStorageKey('ALL')),
-                    if (isSuperAdmin) const _AdminList(key: PageStorageKey('ADMINS')),
-                    if (isSuperAdmin) const _RoleList(key: PageStorageKey('ROLES')),
+                    const _EmployeeList(
+                      status: 'APPROVED',
+                      key: PageStorageKey('APPROVED'),
+                    ),
+                    const _EmployeeList(
+                      status: 'PENDING',
+                      key: PageStorageKey('PENDING'),
+                    ),
+                    const _EmployeeList(
+                      status: 'ALL',
+                      key: PageStorageKey('ALL'),
+                    ),
+                    if (isSuperAdmin)
+                      const _AdminList(key: PageStorageKey('ADMINS')),
+                    if (isSuperAdmin)
+                      const _RoleList(key: PageStorageKey('ROLES')),
                   ],
                 ),
                 Positioned(
@@ -71,7 +85,9 @@ class _AdminEmployeesScreenState extends ConsumerState<AdminEmployeesScreen> {
                   right: 16,
                   child: FloatingActionButton(
                     onPressed: () async {
-                      final result = await context.router.push(const RegisterEmployeeRoute());
+                      final result = await context.router.push(
+                        const RegisterEmployeeRoute(),
+                      );
                       if (result == true) {
                         ref.invalidate(employeesProvider);
                       }
@@ -112,7 +128,10 @@ class _EmployeeList extends ConsumerWidget {
             );
           }
           return ListView.builder(
-              padding: AppScaffold.getScrollPadding(context, basePadding: const EdgeInsets.all(16)),
+            padding: AppScaffold.getScrollPadding(
+              context,
+              basePadding: const EdgeInsets.all(16),
+            ),
             itemCount: employees.length,
             itemBuilder: (context, index) {
               final emp = employees[index];
@@ -133,7 +152,7 @@ class _EmployeeList extends ConsumerWidget {
 class _EmployeeCard extends ConsumerWidget {
   final User emp;
   final String statusType;
-  
+
   const _EmployeeCard({required this.emp, required this.statusType});
 
   void _showDeleteConfirm(BuildContext context, WidgetRef ref) {
@@ -141,11 +160,19 @@ class _EmployeeCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Reject Employee?'),
-        content: const Text('Are you sure you want to reject this employee? This action is destructive and cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to reject this employee? This action is destructive and cannot be undone.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: VelocityColors.error, foregroundColor: VelocityColors.baseWhite),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VelocityColors.error,
+              foregroundColor: VelocityColors.baseWhite,
+            ),
             onPressed: () async {
               Navigator.pop(ctx);
               try {
@@ -153,18 +180,27 @@ class _EmployeeCard extends ConsumerWidget {
                 ref.invalidate(employeesProvider);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: const Text('Employee rejected.'), backgroundColor: VelocityColors.error),
+                    SnackBar(
+                      content: const Text('Employee rejected.'),
+                      backgroundColor: VelocityColors.error,
+                    ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: VelocityColors.error),
+                    SnackBar(
+                      content: Text(ErrorHandler.getUserMessage(e)),
+                      backgroundColor: VelocityColors.error,
+                    ),
                   );
                 }
               }
             },
-            child: Text('REJECT', style: TextStyle(color: VelocityColors.baseWhite)),
+            child: Text(
+              'REJECT',
+              style: TextStyle(color: VelocityColors.baseWhite),
+            ),
           ),
         ],
       ),
@@ -174,26 +210,39 @@ class _EmployeeCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isApproved = emp.isApproved == true;
-    
-    return Card(
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: ListTile(
           onTap: () async {
             // Edit
-            final result = await context.router.push(EmployeeProfileEditRoute(employee: emp));
+            final result = await context.router.push(
+              EmployeeProfileEditRoute(employee: emp),
+            );
             if (result == true) {
               ref.invalidate(employeesProvider);
             }
           },
           leading: CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
             foregroundColor: Theme.of(context).colorScheme.primary,
             radius: 24,
             child: Text(
@@ -201,30 +250,56 @@ class _EmployeeCard extends ConsumerWidget {
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
             ),
           ),
-          title: Text(emp.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          title: Text(
+            emp.name,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 6),
-              Text(emp.email, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+              Text(
+                emp.email,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+                      color: Theme.of(
+                        context,
+                      ).dividerColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Text(
-                      emp.role, 
-                      style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, letterSpacing: 0.5)
+                      emp.role,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   if (emp.department != null) ...[
                     const SizedBox(width: 8),
-                    Text(emp.department!, style: TextStyle(fontSize: 12, color: Theme.of(context).unselectedWidgetColor, fontWeight: FontWeight.w500)),
+                    Text(
+                      emp.department!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).unselectedWidgetColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -233,9 +308,14 @@ class _EmployeeCard extends ConsumerWidget {
           isThreeLine: true,
           trailing: isApproved
               ? IconButton(
-                  icon: Icon(Icons.chevron_right, color: Theme.of(context).unselectedWidgetColor),
+                  icon: Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).unselectedWidgetColor,
+                  ),
                   onPressed: () async {
-                    final result = await context.router.push(EmployeeProfileEditRoute(employee: emp));
+                    final result = await context.router.push(
+                      EmployeeProfileEditRoute(employee: emp),
+                    );
                     if (result == true) {
                       ref.invalidate(employeesProvider);
                     }
@@ -249,25 +329,41 @@ class _EmployeeCard extends ConsumerWidget {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: VelocityColors.success.withValues(alpha: 0.1), 
+                          color: VelocityColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: VelocityColors.success.withValues(alpha: 0.3))
+                          border: Border.all(
+                            color: VelocityColors.success.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
                         ),
-                        child: Icon(Icons.check, color: VelocityColors.success, size: 20),
+                        child: Icon(
+                          Icons.check,
+                          color: VelocityColors.success,
+                          size: 20,
+                        ),
                       ),
                       onPressed: () async {
                         try {
-                          await ref.read(employeeServiceProvider).approveEmployee(emp.id);
+                          await ref
+                              .read(employeeServiceProvider)
+                              .approveEmployee(emp.id);
                           ref.invalidate(employeesProvider);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: const Text('Employee approved.'), backgroundColor: VelocityColors.success),
+                              SnackBar(
+                                content: const Text('Employee approved.'),
+                                backgroundColor: VelocityColors.success,
+                              ),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(ErrorHandler.getUserMessage(e)), backgroundColor: VelocityColors.error),
+                              SnackBar(
+                                content: Text(ErrorHandler.getUserMessage(e)),
+                                backgroundColor: VelocityColors.error,
+                              ),
                             );
                           }
                         }
@@ -278,11 +374,17 @@ class _EmployeeCard extends ConsumerWidget {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: VelocityColors.error.withValues(alpha: 0.1), 
+                          color: VelocityColors.error.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: VelocityColors.error.withValues(alpha: 0.3))
+                          border: Border.all(
+                            color: VelocityColors.error.withValues(alpha: 0.3),
+                          ),
                         ),
-                        child: Icon(Icons.close, color: VelocityColors.error, size: 20),
+                        child: Icon(
+                          Icons.close,
+                          color: VelocityColors.error,
+                          size: 20,
+                        ),
                       ),
                       onPressed: () => _showDeleteConfirm(context, ref),
                     ),
@@ -303,52 +405,91 @@ class _AdminList extends ConsumerStatefulWidget {
   @override
   ConsumerState<_AdminList> createState() => _AdminListState();
 }
+
 class _AdminListState extends ConsumerState<_AdminList> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(adminsProvider);
     return state.when(
       data: (admins) => ListView.builder(
-              padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         itemCount: admins.length,
         itemBuilder: (ctx, i) {
           final adm = admins[i];
-          return Card(
+          return Container(
             margin: const EdgeInsets.only(bottom: 12),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Theme.of(context).dividerColor),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
                   foregroundColor: Theme.of(context).colorScheme.primary,
                   radius: 22,
                   child: Text(
                     adm.name.isNotEmpty ? adm.name[0].toUpperCase() : 'A',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-                title: Text(adm.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                title: Text(
+                  adm.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 6),
-                    Text(adm.email, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    Text(
+                      adm.email,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                       ),
                       child: Text(
-                        adm.role, 
-                        style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, letterSpacing: 0.5)
+                        adm.role,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -358,7 +499,9 @@ class _AdminListState extends ConsumerState<_AdminList> {
                   value: adm.isActive ?? true,
                   activeThumbColor: Theme.of(context).colorScheme.primary,
                   onChanged: (v) async {
-                    await ref.read(employeeServiceProvider).toggleAdminStatus(adm.id, v);
+                    await ref
+                        .read(employeeServiceProvider)
+                        .toggleAdminStatus(adm.id, v);
                     ref.invalidate(adminsProvider);
                   },
                 ),
@@ -368,7 +511,10 @@ class _AdminListState extends ConsumerState<_AdminList> {
         },
       ),
       loading: () => const LoadingStateWidget(),
-      error: (e, s) => ErrorStateWidget(error: e.toString(), onRetry: () => ref.invalidate(adminsProvider)),
+      error: (e, s) => ErrorStateWidget(
+        error: e.toString(),
+        onRetry: () => ref.invalidate(adminsProvider),
+      ),
     );
   }
 }
@@ -382,6 +528,7 @@ class _RoleList extends ConsumerStatefulWidget {
   @override
   ConsumerState<_RoleList> createState() => _RoleListState();
 }
+
 class _RoleListState extends ConsumerState<_RoleList> {
   @override
   Widget build(BuildContext context) {
@@ -419,12 +566,23 @@ class _RoleListState extends ConsumerState<_RoleList> {
               itemCount: roles.length,
               itemBuilder: (ctx, i) {
                 final role = roles[i];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Theme.of(context).dividerColor),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).dividerColor.withValues(alpha: 0.5),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: InkWell(
                     onTap: () {
@@ -442,115 +600,150 @@ class _RoleListState extends ConsumerState<_RoleList> {
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          role.name.replaceAll('_', ' '),
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, letterSpacing: 0.5),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 8,
-                          children: role.permissions.map((p) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  role.name.replaceAll('_', ' '),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 8,
+                                  children: role.permissions.map((p) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).dividerColor.withValues(alpha: 0.05),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        p.replaceAll('_', ' '),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall?.color,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          IconButton(
+                            tooltip: 'Delete Role',
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Theme.of(context).dividerColor),
-                              ),
-                              child: Text(
-                                p.replaceAll('_', ' '),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Theme.of(context).textTheme.bodySmall?.color,
-                                  fontWeight: FontWeight.w600,
+                                color: VelocityColors.error.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: VelocityColors.error.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    tooltip: 'Delete Role',
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: VelocityColors.error.withValues(alpha: 0.1), 
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: VelocityColors.error.withValues(alpha: 0.3))
-                      ),
-                      child: Icon(Icons.delete_outline, color: VelocityColors.error, size: 20),
-                    ),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete Role?'),
-                          content: Text(
-                            'Are you sure you want to delete role "${role.name.replaceAll('_', ' ')}"?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: VelocityColors.error,
-                                foregroundColor: VelocityColors.baseWhite,
+                              child: Icon(
+                                Icons.delete_outline,
+                                color: VelocityColors.error,
+                                size: 20,
                               ),
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Delete'),
                             ),
-                          ],
-                        ),
-                      );
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete Role?'),
+                                  content: Text(
+                                    'Are you sure you want to delete role "${role.name.replaceAll('_', ' ')}"?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: VelocityColors.error,
+                                        foregroundColor:
+                                            VelocityColors.baseWhite,
+                                      ),
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
 
-                      if (confirm == true) {
-                        try {
-                          await ref.read(rolesServiceProvider).deleteRole(role.id);
-                          ref.invalidate(rolesProvider);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Role deleted successfully'),
-                                backgroundColor: VelocityColors.primaryRed,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(ErrorHandler.getUserMessage(e)),
-                                backgroundColor: VelocityColors.error,
-                              ),
-                            );
-                          }
-                        }
-                      }
-                    },
+                              if (confirm == true) {
+                                try {
+                                  await ref
+                                      .read(rolesServiceProvider)
+                                      .deleteRole(role.id);
+                                  ref.invalidate(rolesProvider);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Role deleted successfully',
+                                        ),
+                                        backgroundColor:
+                                            VelocityColors.primaryRed,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          ErrorHandler.getUserMessage(e),
+                                        ),
+                                        backgroundColor: VelocityColors.error,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
-        );
-      },
-    ),
-  ),
-],
-),
+        ],
+      ),
       loading: () => const LoadingStateWidget(),
-      error: (e, s) => ErrorStateWidget(error: e.toString(), onRetry: () => ref.invalidate(rolesProvider)),
+      error: (e, s) => ErrorStateWidget(
+        error: e.toString(),
+        onRetry: () => ref.invalidate(rolesProvider),
+      ),
     );
   }
 }

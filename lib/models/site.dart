@@ -5,6 +5,8 @@ class Site {
   final double longitude;
   final int? radiusMeters;
   final String? address;
+  final String? officeStartTime;
+  final String? officeEndTime;
 
   Site({
     required this.id,
@@ -13,6 +15,8 @@ class Site {
     required this.longitude,
     this.radiusMeters,
     this.address,
+    this.officeStartTime,
+    this.officeEndTime,
   });
 
   factory Site.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class Site {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       radiusMeters: json['radiusMeters'] as int?,
       address: json['address'] as String?,
+      officeStartTime: json['officeStartTime'] as String?,
+      officeEndTime: json['officeEndTime'] as String?,
     );
   }
 }

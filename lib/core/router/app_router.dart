@@ -5,6 +5,7 @@ import '../../features/shared/app_shell.dart';
 import '../../features/employee/screens/employee_dashboard_screen.dart';
 import '../../features/employee/screens/employee_leaves_screen.dart';
 import '../../features/employee/screens/employee_history_screen.dart';
+import '../../features/employee/screens/employee_requests_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/admin/screens/admin_approvals_screen.dart';
 import '../../features/admin/screens/admin_employees_screen.dart';
@@ -53,20 +54,21 @@ class AppRouter extends RootStackRouter {
             AutoRoute(page: EmployeeLeavesRoute.page),
             AutoRoute(page: EmployeeHistoryRoute.page),
             AutoRoute(page: EmployeeOvertimeRoute.page),
-            AutoRoute(page: RequestOvertimeRoute.page),
             AutoRoute(page: AdminDashboardRoute.page),
             AutoRoute(page: AdminApprovalsRoute.page),
             AutoRoute(page: AdminEmployeesRoute.page),
             AutoRoute(page: AdminReportsRoute.page),
             AutoRoute(page: AdminAttendanceApprovalsRoute.page),
-            AutoRoute(page: LiveMonitoringRoute.page),
-            AutoRoute(page: AdminOvertimeRoute.page),
             AutoRoute(page: AdminSettingsRoute.page),
-            AutoRoute(page: AdminRolesRoute.page),
-            AutoRoute(page: SuperAdminAdminsRoute.page),
             AutoRoute(page: ProfileRoute.page),
-            AutoRoute(page: NotificationsRoute.page),
+            AutoRoute(page: EmployeeRequestsRoute.page),
           ],
         ),
+        AutoRoute(page: RequestOvertimeRoute.page),
+        AutoRoute(page: LiveMonitoringRoute.page),
+        AutoRoute(page: AdminOvertimeRoute.page),
+        AutoRoute(page: AdminRolesRoute.page),
+        AutoRoute(page: SuperAdminAdminsRoute.page),
+        AutoRoute(page: NotificationsRoute.page),
       ];
 }

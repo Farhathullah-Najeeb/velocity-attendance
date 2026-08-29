@@ -125,13 +125,24 @@ class AdminApprovalsScreen extends ConsumerWidget {
               itemCount: leaves.length,
               itemBuilder: (context, index) {
                 final leave = leaves[index];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -250,11 +261,10 @@ class AdminApprovalsScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            );
-          },
+                  );
+                },
+              );
+            },
           loading: () => const LoadingStateWidget(),
           error: (err, stack) => ErrorStateWidget(
             error: err.toString(),

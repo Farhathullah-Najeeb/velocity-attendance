@@ -72,6 +72,7 @@ class _EmployeeDashboardScreenState
     extends ConsumerState<EmployeeDashboardScreen> {
   bool _isLoading = false;
   String? _statusMessage;
+  bool _isWfh = false;
 
   Future<Position> _determinePosition() async {
     debugPrint(
@@ -135,7 +136,7 @@ class _EmployeeDashboardScreenState
       );
       await ref
           .read(attendanceServiceProvider)
-          .checkIn(lat, lng, "Current Location");
+          .checkIn(lat, lng, "Current Location", _isWfh);
       debugPrint('--> _handleCheckIn: API call completed successfully.');
 
       setState(() {
@@ -348,9 +349,9 @@ class _EmployeeDashboardScreenState
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -443,6 +444,39 @@ class _EmployeeDashboardScreenState
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    if (!isCheckedIn && !isCheckedOut)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.home_work_outlined,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Mark as Work From Home',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: _isWfh,
+                              activeTrackColor: Theme.of(context).colorScheme.primary,
+                              onChanged: (val) {
+                                setState(() {
+                                  _isWfh = val;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -663,8 +697,8 @@ class _EmployeeDashboardScreenState
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 10,
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                       ],

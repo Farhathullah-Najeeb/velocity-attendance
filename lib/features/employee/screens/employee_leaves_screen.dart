@@ -180,27 +180,37 @@ class EmployeeLeavesScreen extends ConsumerWidget {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final leave = leaves[index];
-                      return Card(
+                      return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
                                     leave.type,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  _StatusBadge(status: leave.status),
-                                ],
-                              ),
+                                ),
+                                _StatusBadge(status: leave.status),
+                              ],
+                            ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
@@ -210,12 +220,14 @@ class EmployeeLeavesScreen extends ConsumerWidget {
                                     color: Colors.grey,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    '${leave.fromDate} to ${leave.toDate}',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.color,
+                                  Expanded(
+                                    child: Text(
+                                      '${leave.fromDate} to ${leave.toDate}',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.color,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -274,7 +286,6 @@ class EmployeeLeavesScreen extends ConsumerWidget {
                               ],
                             ],
                           ),
-                        ),
                       );
                     }, childCount: leaves.length),
                   ),
@@ -461,12 +472,43 @@ class _ApplyLeaveDialogState extends ConsumerState<_ApplyLeaveDialog> {
       calculatedDays = _toDate!.difference(_fromDate!).inDays + 1;
     }
 
+    final inputDecoration = InputDecoration(
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    );
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28.0),
+          decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -474,94 +516,97 @@ class _ApplyLeaveDialogState extends ConsumerState<_ApplyLeaveDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.send_outlined,
-                    color: Theme.of(context).colorScheme.primary,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              VelocityColors.primaryRed.withValues(alpha: 0.2),
+                              VelocityColors.primaryRed.withValues(alpha: 0.05),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.edit_calendar_rounded,
+                          color: VelocityColors.primaryRed,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Apply for Leave',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Submit a new time-off request',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'REQUEST TIME OFF',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 1.0,
-                      color: Theme.of(context).colorScheme.onSurface,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, size: 20),
                     ),
                   ),
                 ],
               ),
-              const Divider(height: 32),
-
+              const SizedBox(height: 32),
               Text(
-                'LEAVE TYPE',
+                'Leave Type',
                 style: TextStyle(
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(8),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedType,
+                decoration: inputDecoration.copyWith(
+                  prefixIcon: const Icon(Icons.category_rounded, size: 22),
+                  hintText: 'Select leave type',
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedType,
-                    items: _leaveTypes
-                        .map(
-                          (type) =>
-                              DropdownMenuItem(value: type, child: Text(type)),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedType = val);
-                    },
-                  ),
-                ),
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                items: _leaveTypes.map((type) {
+                  return DropdownMenuItem(
+                    value: type, 
+                    child: Text(type, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedType = val);
+                  }
+                },
               ),
-
-              const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.3),
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'CALCULATED DURATION',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$calculatedDays Days',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -570,49 +615,48 @@ class _ApplyLeaveDialogState extends ConsumerState<_ApplyLeaveDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'START DATE',
+                          'From Date',
                           style: TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
                         InkWell(
                           onTap: () => _selectDate(context, true),
+                          borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 14,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Theme.of(context).dividerColor,
+                                color: _fromDate != null
+                                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                                    : Theme.of(context).dividerColor.withValues(alpha: 0.1),
                               ),
-                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 20,
+                                  color: _fromDate != null ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
+                                ),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    _fromDate == null
-                                        ? 'dd/mm/yyyy'
-                                        : DateFormat(
-                                            'dd/MM/yyyy',
-                                          ).format(_fromDate!),
+                                    _fromDate != null
+                                        ? DateFormat('MMM dd, yyyy').format(_fromDate!)
+                                        : 'Select Date',
                                     style: TextStyle(
-                                      color: _fromDate == null
-                                          ? Theme.of(context).hintColor
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                      fontSize: 13,
+                                      color: _fromDate != null ? Theme.of(context).colorScheme.onSurface : Theme.of(context).hintColor,
+                                      fontWeight: _fromDate != null ? FontWeight.w700 : FontWeight.normal,
+                                      fontSize: 14,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const Icon(Icons.calendar_today, size: 16),
                               ],
                             ),
                           ),
@@ -620,55 +664,54 @@ class _ApplyLeaveDialogState extends ConsumerState<_ApplyLeaveDialog> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'END DATE',
+                          'To Date',
                           style: TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
                         InkWell(
                           onTap: () => _selectDate(context, false),
+                          borderRadius: BorderRadius.circular(16),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 14,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Theme.of(context).dividerColor,
+                                color: _toDate != null
+                                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                                    : Theme.of(context).dividerColor.withValues(alpha: 0.1),
                               ),
-                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Icon(
+                                  Icons.event_rounded,
+                                  size: 20,
+                                  color: _toDate != null ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
+                                ),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    _toDate == null
-                                        ? 'dd/mm/yyyy'
-                                        : DateFormat(
-                                            'dd/MM/yyyy',
-                                          ).format(_toDate!),
+                                    _toDate != null
+                                        ? DateFormat('MMM dd, yyyy').format(_toDate!)
+                                        : 'Select Date',
                                     style: TextStyle(
-                                      color: _toDate == null
-                                          ? Theme.of(context).hintColor
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                      fontSize: 13,
+                                      color: _toDate != null ? Theme.of(context).colorScheme.onSurface : Theme.of(context).hintColor,
+                                      fontWeight: _toDate != null ? FontWeight.w700 : FontWeight.normal,
+                                      fontSize: 14,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const Icon(Icons.calendar_today, size: 16),
                               ],
                             ),
                           ),
@@ -678,93 +721,135 @@ class _ApplyLeaveDialogState extends ConsumerState<_ApplyLeaveDialog> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
+              if (calculatedDays > 0) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blue.shade50.withValues(alpha: 0.5),
+                        Colors.blue.shade100.withValues(alpha: 0.2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.info_rounded, color: Colors.blue, size: 20),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Duration',
+                            style: TextStyle(
+                              color: Colors.blue[800],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$calculatedDays Days',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.blue[700],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               Text(
-                'REASON FOR REQUEST',
+                'Reason for Leave',
                 style: TextStyle(
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _reasonController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText:
-                      'Please state the purpose of your time off request...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).dividerColor,
-                    ),
-                  ),
+                decoration: inputDecoration.copyWith(
+                  hintText: 'Provide a brief explanation...',
+                  alignLabelWithHint: true,
                 ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                maxLines: 3,
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Please enter a reason';
+                  }
+                  return null;
+                },
               ),
-
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
-                        side: BorderSide(color: Theme.of(context).dividerColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: VelocityColors.primaryRed.withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VelocityColors.primaryRed,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
                     child: _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : ElevatedButton(
-                            onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                              foregroundColor: Theme.of(
-                                context,
-                              ).colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Submit Request',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text('Submit Application'),
-                            ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, size: 20),
+                            ],
                           ),
                   ),
-                ],
+                ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );
