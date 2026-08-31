@@ -37,19 +37,42 @@ class SnackbarUtils {
     );
   }
 
-  static void handleApiError(BuildContext context, dynamic error) {
-    String message = 'An unexpected error occurred.';
-    
+  static String extractErrorMessage(dynamic error) {
     if (error is DioException) {
       if (error.error is ApiException) {
-        message = (error.error as ApiException).message;
-      } else {
-        message = error.message ?? message;
+        return (error.error as ApiException).message;
       }
-    } else {
-      message = error.toString();
+      final data = error.response?.data;
+      if (data is Map) {
+        if (data['message'] != null && data['message'].toString().trim().isNotEmpty) {
+          return data['message'].toString();
+        }
+        if (data['error'] != null && data['error'].toString().trim().isNotEmpty) {
+          return data['error'].toString();
+        }
+        if (data['detail'] != null && data['detail'].toString().trim().isNotEmpty) {
+          return data['detail'].toString();
+        }
+      }
+      if (data is String && data.trim().isNotEmpty) {
+        return data;
+      }
+      if (error.message != null && error.message!.isNotEmpty) {
+        return error.message!;
+      }
     }
-    
+    if (error != null) {
+      final str = error.toString();
+      if (str.startsWith('Exception: ')) {
+        return str.replaceFirst('Exception: ', '');
+      }
+      return str;
+    }
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+  static void handleApiError(BuildContext context, dynamic error) {
+    final message = extractErrorMessage(error);
     showError(context, message);
   }
 }

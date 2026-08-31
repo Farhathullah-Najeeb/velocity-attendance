@@ -9,12 +9,25 @@ class LeaveService {
   LeaveService(this._dio);
 
   Future<void> applyLeave(String type, String fromDate, String toDate, String reason) async {
-    await _dio.post('/leaves/apply', data: {
-      'type': type,
-      'fromDate': fromDate,
-      'toDate': toDate,
-      'reason': reason,
-    });
+    try {
+      await _dio.post('/leaves/apply', data: {
+        'type': type,
+        'fromDate': fromDate,
+        'toDate': toDate,
+        'reason': reason,
+      });
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        await _dio.post('/leaves', data: {
+          'type': type,
+          'fromDate': fromDate,
+          'toDate': toDate,
+          'reason': reason,
+        });
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<List<Leave>> getLeaves({String? status, String? type, String? employeeId}) async {

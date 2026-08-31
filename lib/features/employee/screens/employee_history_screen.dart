@@ -60,46 +60,46 @@ class _EmployeeHistoryScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
             // Header
-            if (isDesktop)
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF334155),
-                    width: 1.5,
-                  ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 20,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF334155),
+                  width: 1.5,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE53935).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.history_rounded,
-                        size: 28,
-                        color: Color(0xFFE53935),
-                      ),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 20,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 16),
-                    Column(
+                    child: const Icon(
+                      Icons.history_rounded,
+                      size: 28,
+                      color: Color(0xFFE53935),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
                         Text(
                           'Attendance History & Logs',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                             letterSpacing: -0.5,
@@ -109,45 +109,17 @@ class _EmployeeHistoryScreenState
                         Text(
                           'View daily work logs, analyze attendance stats, and export timesheets',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: Color(0xFF94A3B8),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              )
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'My History',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'View daily logs and exports.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
+            ),
             const SizedBox(height: 20),
 
               // Tab Switcher
@@ -386,76 +358,136 @@ class _EmployeeHistoryScreenState
                       );
                     }
 
-                    if (isDesktop) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.0,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Table Header Row
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 12,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Section Title & Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              color: Colors.white,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: VelocityColors.primaryRed.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.list_alt_rounded,
+                                      size: 16,
+                                      color: VelocityColors.primaryRed,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'ATTENDANCE LOGS',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                      color: Color(0xFF475569),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${history.length} RECORDS',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                            // Table Header Row & Body
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: isDesktop ? 600 : 500,
                                 ),
-                                color: const Color(0xFFF8FAFC),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _desktopHeader('DATE', flex: 2),
-                                    _desktopHeader('CHECK IN', flex: 2),
-                                    _desktopHeader('CHECK OUT', flex: 2),
-                                    _desktopHeader('DURATION', flex: 2),
-                                    _desktopHeader('STATUS', flex: 2),
+                                    Container(
+                                      width: isDesktop ? 800 : 550,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
+                                      color: const Color(0xFFF8FAFC),
+                                      child: Row(
+                                        children: [
+                                          _desktopHeader('DATE', flex: 2),
+                                          _desktopHeader('CHECK IN', flex: 2),
+                                          _desktopHeader('CHECK OUT', flex: 2),
+                                          _desktopHeader('DURATION', flex: 2),
+                                          _desktopHeader('STATUS', flex: 2),
+                                        ],
+                                      ),
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                    SizedBox(
+                                      width: isDesktop ? 800 : 550,
+                                      child: ListView.separated(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: history.length,
+                                        separatorBuilder: (context, index) => const Divider(
+                                          height: 1,
+                                          color: Color(0xFFF1F5F9),
+                                        ),
+                                        itemBuilder: (context, index) {
+                                          return _buildDesktopHistoryRow(
+                                            history[index],
+                                            index == history.length - 1,
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                              // Table Body Rows
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: history.length,
-                                separatorBuilder: (context, index) => const Divider(
-                                  height: 1,
-                                  color: Color(0xFFF1F5F9),
-                                ),
-                                itemBuilder: (context, index) {
-                                  return _buildDesktopHistoryRow(
-                                    history[index],
-                                    index == history.length - 1,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      );
-                    }
-
-                    // Mobile View
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: history.length,
-                      itemBuilder: (context, index) {
-                        return _buildHistoryCard(history[index]);
-                      },
+                      ),
                     );
                   },
                   loading: () => const Padding(
@@ -621,142 +653,6 @@ class _EmployeeHistoryScreenState
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHistoryCard(Attendance record) {
-    String formatTime(String timeStr) {
-      if (timeStr == '--:--' || timeStr == '--' || timeStr.isEmpty) return timeStr;
-      try {
-        final dt = DateTime.parse(timeStr).toLocal();
-        return DateFormat.jm().format(dt).toLowerCase();
-      } catch (_) {
-        return timeStr;
-      }
-    }
-
-    final inTime = record.checkInTime.isNotEmpty
-        ? formatTime(record.checkInTime)
-        : '--:--';
-    final outTime = record.checkOutTime != null
-        ? formatTime(record.checkOutTime!)
-        : '—';
-    final duration = record.formattedWorkTime ??
-        (record.workDurationMinutes != null
-            ? '${record.workDurationMinutes}m'
-            : '—');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                record.dateStr,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              if (record.isLateArrival == true ||
-                  record.isEarlyCheckout == true)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
-                  ),
-                  child: Text(
-                    record.isLateArrival == true ? 'LATE' : 'EARLY EXIT',
-                    style: const TextStyle(
-                      color: Color(0xFFD97706),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1FAE5),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
-                  ),
-                  child: const Text(
-                    'ON TIME',
-                    style: TextStyle(
-                      color: Color(0xFF059669),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.access_time_rounded,
-                size: 16,
-                color: Color(0xFF64748B),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'In: $inTime | Out: $outTime',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF334155),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(
-                Icons.timelapse_rounded,
-                size: 16,
-                color: Color(0xFF64748B),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Duration: $duration',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
           ),
         ],
       ),
