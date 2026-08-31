@@ -1,72 +1,186 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/snackbar_utils.dart';
+import '../../../core/theme/velocity_colors.dart';
 import '../../attendance/services/attendance_service.dart';
+import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/states.dart';
 
 @RoutePage()
 class EmployeeRequestsScreen extends ConsumerStatefulWidget {
   const EmployeeRequestsScreen({super.key});
 
   @override
-  ConsumerState<EmployeeRequestsScreen> createState() => _EmployeeRequestsScreenState();
+  ConsumerState<EmployeeRequestsScreen> createState() =>
+      _EmployeeRequestsScreenState();
 }
 
-class _EmployeeRequestsScreenState extends ConsumerState<EmployeeRequestsScreen> {
+class _EmployeeRequestsScreenState
+    extends ConsumerState<EmployeeRequestsScreen> {
   int _selectedTabIndex = 0; // 0 for WFH, 1 for Regularization
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('My Requests'),
-        elevation: 0,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            color: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Text(
-              'Submit and track Work From Home and Attendance Regularization requests.',
-              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14),
-            ),
+    final isDesktop = kIsWeb && MediaQuery.of(context).size.width > 800;
+
+    return AppScaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            isDesktop ? 24 : 16,
+            isDesktop ? 20 : 16,
+            isDesktop ? 24 : 16,
+            40,
           ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+            // Header
+            if (isDesktop)
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF334155),
+                    width: 1.5,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 20,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF667EEA).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.mark_email_unread_rounded,
+                        size: 28,
+                        color: Color(0xFF667EEA),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'Employee Requests & Approvals',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Submit and track Work From Home and Attendance Regularization requests',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Requests',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Submit and track WFH & Regularization requests.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            const SizedBox(height: 20),
+
+            // Tab Switcher
+            Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: InkWell(
                       onTap: () => setState(() => _selectedTabIndex = 0),
+                      borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: _selectedTabIndex == 0 ? Theme.of(context).colorScheme.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: _selectedTabIndex == 0
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                )
+                              : null,
+                          color: _selectedTabIndex == 0
+                              ? null
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.home_work_outlined, size: 16, color: _selectedTabIndex == 0 ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color),
-                              const SizedBox(width: 8),
-                              Text('WFH', style: TextStyle(color: _selectedTabIndex == 0 ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold, fontSize: 13)),
-                            ],
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.home_work_rounded,
+                              size: 16,
+                              color: _selectedTabIndex == 0
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Work From Home (WFH)',
+                              style: TextStyle(
+                                color: _selectedTabIndex == 0
+                                    ? Colors.white
+                                    : const Color(0xFF64748B),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -74,23 +188,45 @@ class _EmployeeRequestsScreenState extends ConsumerState<EmployeeRequestsScreen>
                   Expanded(
                     child: InkWell(
                       onTap: () => setState(() => _selectedTabIndex = 1),
+                      borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: _selectedTabIndex == 1 ? Theme.of(context).colorScheme.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: _selectedTabIndex == 1
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                )
+                              : null,
+                          color: _selectedTabIndex == 1
+                              ? null
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.update, size: 16, color: _selectedTabIndex == 1 ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color),
-                              const SizedBox(width: 8),
-                              Text('Regularization', style: TextStyle(color: _selectedTabIndex == 1 ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold, fontSize: 13)),
-                            ],
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.update_rounded,
+                              size: 16,
+                              color: _selectedTabIndex == 1
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Regularization',
+                              style: TextStyle(
+                                color: _selectedTabIndex == 1
+                                    ? Colors.white
+                                    : const Color(0xFF64748B),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -98,14 +234,14 @@ class _EmployeeRequestsScreenState extends ConsumerState<EmployeeRequestsScreen>
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+
+              _selectedTabIndex == 0
+                  ? const _WfhRequestsView()
+                  : const _RegularizationRequestsView(),
+            ],
           ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: _selectedTabIndex == 0
-                ? const _WfhRequestsView()
-                : const _RegularizationRequestsView(),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -121,18 +257,37 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
   void _showNewRequestModal() {
     final dateCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('New WFH Request'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.home_work_rounded, color: VelocityColors.primaryRed),
+            SizedBox(width: 10),
+            Text(
+              'New WFH Request',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: dateCtrl,
               readOnly: true,
-              decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
+              decoration: InputDecoration(
+                labelText: 'Date (YYYY-MM-DD)',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
+              ),
               onTap: () async {
                 final date = await showDatePicker(
                   context: ctx,
@@ -145,10 +300,18 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
                 }
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             TextField(
               controller: reasonCtrl,
-              decoration: const InputDecoration(labelText: 'Reason'),
+              decoration: InputDecoration(
+                labelText: 'Reason for WFH',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+              ),
               maxLines: 3,
             ),
           ],
@@ -159,26 +322,32 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VelocityColors.primaryRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () async {
               if (dateCtrl.text.isEmpty || reasonCtrl.text.isEmpty) {
                 return;
               }
               try {
                 await ref.read(attendanceServiceProvider).requestWfh(
-                  dateCtrl.text,
-                  reasonCtrl.text,
-                );
+                      dateCtrl.text,
+                      reasonCtrl.text,
+                    );
                 if (ctx.mounted) {
                   Navigator.pop(ctx);
                   SnackbarUtils.showSuccess(ctx, 'WFH Request submitted');
-                  // Invalidate provider to refresh list
                   setState(() {});
                 }
               } catch (e) {
                 if (ctx.mounted) SnackbarUtils.handleApiError(ctx, e);
               }
             },
-            child: const Text('Submit'),
+            child: const Text('Submit Request'),
           ),
         ],
       ),
@@ -187,50 +356,251 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = kIsWeb && MediaQuery.of(context).size.width > 800;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'WFH Applications',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
             ),
-            icon: const Icon(Icons.add),
-            label: const Text('New WFH Request'),
-            onPressed: _showNewRequestModal,
-          ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VelocityColors.primaryRed,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text(
+                'New WFH Request',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: _showNewRequestModal,
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: FutureBuilder(
-            future: ref.read(attendanceServiceProvider).getWfhRequests(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              final requests = snapshot.data ?? [];
-              if (requests.isEmpty) {
-                return const Center(child: Text('No WFH requests found.'));
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: requests.length,
-                itemBuilder: (context, index) {
-                  final req = requests[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text('Date: ${req['dateStr']}'),
-                      subtitle: Text('Reason: ${req['reason']}\nStatus: ${req['status']}'),
-                      isThreeLine: true,
-                    ),
-                  );
-                },
+        FutureBuilder<List<dynamic>>(
+          future: ref.read(attendanceServiceProvider).getWfhRequests(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: LoadingStateWidget(),
               );
-            },
-          ),
+            }
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+            final requests = snapshot.data ?? [];
+            if (requests.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 60),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No WFH requests found.',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                  ),
+                ),
+              );
+            }
+
+            if (isDesktop) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        color: const Color(0xFFF8FAFC),
+                        child: Row(
+                          children: const [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                'DATE',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Text(
+                                'REASON',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                'STATUS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: requests.length,
+                        separatorBuilder: (context, index) => const Divider(
+                          height: 1,
+                          color: Color(0xFFF1F5F9),
+                        ),
+                        itemBuilder: (context, index) {
+                          final req = requests[index];
+                          final status =
+                              (req['status'] ?? 'PENDING').toString();
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    req['dateStr'] ?? '—',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 4,
+                                  child: Text(
+                                    req['reason'] ?? '—',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: _StatusBadge(status: status),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final req = requests[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            req['dateStr'] ?? '—',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          _StatusBadge(
+                            status: req['status'] ?? 'PENDING',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        req['reason'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
     );
@@ -240,10 +610,12 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
 class _RegularizationRequestsView extends ConsumerStatefulWidget {
   const _RegularizationRequestsView();
   @override
-  ConsumerState<_RegularizationRequestsView> createState() => _RegularizationRequestsViewState();
+  ConsumerState<_RegularizationRequestsView> createState() =>
+      _RegularizationRequestsViewState();
 }
 
-class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequestsView> {
+class _RegularizationRequestsViewState
+    extends ConsumerState<_RegularizationRequestsView> {
   void _showNewRequestModal() {
     final dateCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
@@ -253,18 +625,40 @@ class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequ
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDialog) => AlertDialog(
-          title: const Text('New Regularization Request'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.update_rounded, color: VelocityColors.primaryRed),
+              SizedBox(width: 10),
+              Text(
+                'New Regularization',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: dateCtrl,
                 readOnly: true,
-                decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
+                decoration: InputDecoration(
+                  labelText: 'Date (YYYY-MM-DD)',
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  suffixIcon:
+                      const Icon(Icons.calendar_today_rounded, size: 18),
+                ),
                 onTap: () async {
                   final date = await showDatePicker(
                     context: ctx,
-                    initialDate: DateTime.now().subtract(const Duration(days: 1)),
+                    initialDate:
+                        DateTime.now().subtract(const Duration(days: 1)),
                     firstDate: DateTime.now().subtract(const Duration(days: 30)),
                     lastDate: DateTime.now(),
                   );
@@ -273,24 +667,53 @@ class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequ
                   }
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               DropdownButtonFormField<String>(
                 initialValue: type,
-                decoration: const InputDecoration(labelText: 'Type'),
+                decoration: InputDecoration(
+                  labelText: 'Type',
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                ),
+                dropdownColor: Colors.white,
                 items: const [
-                  DropdownMenuItem(value: 'ACCIDENTAL_CHECK_OUT', child: Text('Accidental Check Out')),
-                  DropdownMenuItem(value: 'MISSED_CHECK_IN', child: Text('Missed Check In')),
-                  DropdownMenuItem(value: 'MISSED_CHECK_OUT', child: Text('Missed Check Out')),
-                  DropdownMenuItem(value: 'OTHER', child: Text('Other / Early Check Out')),
+                  DropdownMenuItem(
+                    value: 'ACCIDENTAL_CHECK_OUT',
+                    child: Text('Accidental Check Out'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MISSED_CHECK_IN',
+                    child: Text('Missed Check In'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MISSED_CHECK_OUT',
+                    child: Text('Missed Check Out'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'OTHER',
+                    child: Text('Other / Early Check Out'),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setStateDialog(() => type = val);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               TextField(
                 controller: reasonCtrl,
-                decoration: const InputDecoration(labelText: 'Reason'),
+                decoration: InputDecoration(
+                  labelText: 'Reason',
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                ),
                 maxLines: 3,
               ),
             ],
@@ -301,17 +724,26 @@ class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequ
               child: const Text('Cancel'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VelocityColors.primaryRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               onPressed: () async {
                 if (dateCtrl.text.isEmpty || reasonCtrl.text.isEmpty) {
                   return;
                 }
                 try {
-                  await ref.read(attendanceServiceProvider).requestRegularization(
-                    dateCtrl.text,
-                    type,
-                    '00:00', // Default dummy time
-                    reasonCtrl.text,
-                  );
+                  await ref
+                      .read(attendanceServiceProvider)
+                      .requestRegularization(
+                        dateCtrl.text,
+                        type,
+                        '00:00',
+                        reasonCtrl.text,
+                      );
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
                     SnackbarUtils.showSuccess(ctx, 'Request submitted');
@@ -321,7 +753,7 @@ class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequ
                   if (ctx.mounted) SnackbarUtils.handleApiError(ctx, e);
                 }
               },
-              child: const Text('Submit'),
+              child: const Text('Submit Request'),
             ),
           ],
         ),
@@ -331,52 +763,317 @@ class _RegularizationRequestsViewState extends ConsumerState<_RegularizationRequ
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = kIsWeb && MediaQuery.of(context).size.width > 800;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Regularization Applications',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
             ),
-            icon: const Icon(Icons.add),
-            label: const Text('New Regularization Request'),
-            onPressed: _showNewRequestModal,
-          ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VelocityColors.primaryRed,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text(
+                'New Regularization',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: _showNewRequestModal,
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: FutureBuilder(
-            future: ref.read(attendanceServiceProvider).getRegularizationRequests(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              final requests = snapshot.data ?? [];
-              if (requests.isEmpty) {
-                return const Center(child: Text('No Regularization requests found.'));
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: requests.length,
-                itemBuilder: (context, index) {
-                  final req = requests[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text('Date: ${req['dateStr']} | ${req['type']}'),
-                      subtitle: Text('Reason: ${req['reason']}\nStatus: ${req['status']}'),
-                      isThreeLine: true,
-                    ),
-                  );
-                },
+        FutureBuilder<List<dynamic>>(
+          future:
+              ref.read(attendanceServiceProvider).getRegularizationRequests(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: LoadingStateWidget(),
               );
-            },
-          ),
+            }
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'Error: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+            final requests = snapshot.data ?? [];
+            if (requests.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 60),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No Regularization requests found.',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                  ),
+                ),
+              );
+            }
+
+            if (isDesktop) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        color: const Color(0xFFF8FAFC),
+                        child: Row(
+                          children: const [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                'DATE & TYPE',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Text(
+                                'REASON',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                'STATUS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: requests.length,
+                        separatorBuilder: (context, index) => const Divider(
+                          height: 1,
+                          color: Color(0xFFF1F5F9),
+                        ),
+                        itemBuilder: (context, index) {
+                          final req = requests[index];
+                          final status =
+                              (req['status'] ?? 'PENDING').toString();
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        req['dateStr'] ?? '—',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        req['type'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 4,
+                                  child: Text(
+                                    req['reason'] ?? '—',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: _StatusBadge(status: status),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final req = requests[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${req['dateStr']} | ${req['type']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          _StatusBadge(
+                            status: req['status'] ?? 'PENDING',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        req['reason'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color bgColor;
+    Color textColor;
+    Color borderColor;
+
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        bgColor = const Color(0xFFD1FAE5);
+        textColor = const Color(0xFF059669);
+        borderColor = const Color(0xFFA7F3D0);
+        break;
+      case 'REJECTED':
+        bgColor = const Color(0xFFFEE2E2);
+        textColor = const Color(0xFFDC2626);
+        borderColor = const Color(0xFFFECACA);
+        break;
+      default:
+        bgColor = const Color(0xFFFEF3C7);
+        textColor = const Color(0xFFD97706);
+        borderColor = const Color(0xFFFDE68A);
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+        ),
+      ),
     );
   }
 }

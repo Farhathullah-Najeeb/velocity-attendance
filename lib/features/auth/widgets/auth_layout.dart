@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../shared/widgets/velocity_logo.dart';
-import '../../../core/theme/velocity_colors.dart';
 
 class AuthLayout extends StatelessWidget {
   final String title;
@@ -20,7 +19,7 @@ class AuthLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 900;
+        final isMobile = constraints.maxWidth < 950;
 
         if (isMobile) {
           return _buildMobileLayout(context);
@@ -33,13 +32,29 @@ class AuthLayout extends StatelessWidget {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF8FAFC),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-            child: _buildContent(context, isMobile: true),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            child: Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: _buildContent(context, isMobile: true),
+            ),
           ),
         ),
       ),
@@ -48,19 +63,19 @@ class AuthLayout extends StatelessWidget {
 
   Widget _buildWebLayout(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Row(
         children: [
-          // Left side: Branding / Premium Gradient
+          // Left side: Deep Obsidian Black & Velocity Red Ambient Hero
           Expanded(
             flex: 5,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF1E293B),
                     Color(0xFF0F172A),
-                    Colors.black,
+                    Color(0xFF141A28),
+                    Color(0xFF0A0D14),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -68,58 +83,85 @@ class AuthLayout extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  // Decorative circles
+                  // Ambient Crimson Red Glow Orbs
                   Positioned(
-                    top: -100,
-                    right: -100,
+                    top: -60,
+                    right: -60,
                     child: Container(
                       width: 400,
                       height: 400,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: VelocityColors.primaryRed.withValues(alpha: 0.15),
-                        // Add blur effect natively by avoiding BackdropFilter if possible, or just a soft color
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFFE53935).withValues(alpha: 0.28),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: -150,
-                    left: -50,
+                    bottom: -80,
+                    left: -40,
                     child: Container(
-                      width: 500,
-                      height: 500,
+                      width: 420,
+                      height: 420,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.blueAccent.withValues(alpha: 0.1),
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFFC62828).withValues(alpha: 0.22),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
                   ),
+
                   // Content
                   Padding(
-                    padding: const EdgeInsets.all(64.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 64.0,
+                      vertical: 56.0,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const VelocityLogo(height: 70),
-                        const SizedBox(height: 40),
+                        const VelocityLogo(height: 52),
+                        const SizedBox(height: 48),
                         const Text(
-                          'Manage your workforce seamlessly.',
+                          'Seamless Workforce &\nAttendance Management',
                           style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 42,
+                            fontWeight: FontWeight.w800,
                             height: 1.2,
                             color: Colors.white,
+                            letterSpacing: -0.8,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'The all-in-one attendance management system built for modern, fast-paced teams.',
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Empower your team with real-time GPS check-ins, automated leave approvals, and actionable attendance intelligence.',
                           style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey.shade400,
-                            height: 1.5,
+                            fontSize: 16,
+                            color: Color(0xFF94A3B8),
+                            height: 1.6,
+                            fontWeight: FontWeight.w400,
                           ),
+                        ),
+                        const SizedBox(height: 40),
+
+                        // Highlight Feature Badges
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _buildHeroFeaturePill('⚡ Real-time GPS Attendance'),
+                            _buildHeroFeaturePill('🛡️ Role-based Permissions'),
+                            _buildHeroFeaturePill('📊 Instant Timesheet Exports'),
+                          ],
                         ),
                       ],
                     ),
@@ -128,23 +170,70 @@ class AuthLayout extends StatelessWidget {
               ),
             ),
           ),
-          // Right side: Login Form
+
+          // Right side: Glassmorphism Login Card
           Expanded(
             flex: 4,
             child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
+              color: const Color(0xFFF8FAFC),
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 64.0, vertical: 40.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 56.0,
+                    vertical: 40.0,
+                  ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: _buildContent(context, isMobile: false),
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Container(
+                      padding: const EdgeInsets.all(36),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE53935)
+                                .withValues(alpha: 0.05),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: _buildContent(context, isMobile: false),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeroFeaturePill(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFFE2E8F0),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -156,29 +245,33 @@ class AuthLayout extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (isMobile) ...[
-          const Center(child: VelocityLogo(height: 60)),
-          const SizedBox(height: 48),
+          const Center(child: VelocityLogo(height: 48)),
+          const SizedBox(height: 28),
         ],
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.5,
+          ),
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+          style: const TextStyle(
+            fontSize: 13.5,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w400,
+          ),
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 32),
         ...formChildren,
         if (bottomContent != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           bottomContent!,
         ],
       ],

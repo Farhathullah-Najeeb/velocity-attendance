@@ -254,33 +254,50 @@ class _AdminAttendanceApprovalsScreenState
     return AppScaffold(
       body: Column(
         children: [
+          // Modern Segmented Tab Bar Banner
           Container(
-            color: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _TabButton(
-                    title: 'Exceptions',
-                    isSelected: _selectedTabIndex == 0,
-                    onTap: () => setState(() => _selectedTabIndex = 0),
+            decoration: const BoxDecoration(
+              color: VelocityColors.baseWhite,
+              border: Border(
+                bottom: BorderSide(color: VelocityColors.border, width: 1),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: VelocityColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: VelocityColors.border),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _TabButton(
+                      title: 'Exceptions',
+                      icon: Icons.warning_amber_rounded,
+                      isSelected: _selectedTabIndex == 0,
+                      onTap: () => setState(() => _selectedTabIndex = 0),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _TabButton(
-                    title: 'WFH',
-                    isSelected: _selectedTabIndex == 1,
-                    onTap: () => setState(() => _selectedTabIndex = 1),
+                  Expanded(
+                    child: _TabButton(
+                      title: 'WFH Requests',
+                      icon: Icons.home_work_outlined,
+                      isSelected: _selectedTabIndex == 1,
+                      onTap: () => setState(() => _selectedTabIndex = 1),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _TabButton(
-                    title: 'Regularization',
-                    isSelected: _selectedTabIndex == 2,
-                    onTap: () => setState(() => _selectedTabIndex = 2),
+                  Expanded(
+                    child: _TabButton(
+                      title: 'Regularization',
+                      icon: Icons.update_rounded,
+                      isSelected: _selectedTabIndex == 2,
+                      onTap: () => setState(() => _selectedTabIndex = 2),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Expanded(
@@ -304,6 +321,7 @@ class _AdminAttendanceApprovalsScreenState
   Widget _buildExceptionsTab() {
     final asyncData = ref.watch(pendingAttendanceProvider);
     return RefreshIndicator(
+        color: VelocityColors.primaryRed,
         onRefresh: () async => ref.invalidate(pendingAttendanceProvider),
         child: asyncData.when(
           data: (records) {
@@ -324,11 +342,11 @@ class _AdminAttendanceApprovalsScreenState
 
             return CustomScrollView(
               slivers: [
-                // Top Summary Header
+                // Top Summary Header Banner
                 SliverToBoxAdapter(
                   child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    color: VelocityColors.baseWhite,
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -337,32 +355,35 @@ class _AdminAttendanceApprovalsScreenState
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
+                                color: VelocityColors.warningBg,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.warning_amber_rounded,
-                                color: Colors.orange.shade800,
-                                size: 20,
+                                color: VelocityColors.warning,
+                                size: 18,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
+                                children: const [
+                                  Text(
                                     'Attendance Exceptions Review',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w800,
+                                      color: VelocityColors.textPrimary,
+                                      letterSpacing: -0.2,
                                     ),
                                   ),
+                                  SizedBox(height: 2),
                                   Text(
-                                    'Review and resolve late check-ins and early departures.',
+                                    'Review and resolve employee late check-ins and early departures.',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context).hintColor,
+                                      fontSize: 12.5,
+                                      color: VelocityColors.textSubtle,
                                     ),
                                   ),
                                 ],
@@ -372,7 +393,7 @@ class _AdminAttendanceApprovalsScreenState
                         ),
                         const SizedBox(height: 16),
 
-                        // Stats Summary Row
+                        // Stats Summary Metric Chips
                         Row(
                           children: [
                             Expanded(
@@ -380,29 +401,29 @@ class _AdminAttendanceApprovalsScreenState
                                 label: 'All Exceptions',
                                 count: records.length,
                                 isSelected: _selectedFilter == 'ALL',
-                                color: Theme.of(context).colorScheme.primary,
+                                color: VelocityColors.primaryRed,
                                 onTap: () =>
                                     setState(() => _selectedFilter = 'ALL'),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _SummaryMetricChip(
                                 label: 'Late Arrivals',
                                 count: lateRecords.length,
                                 isSelected: _selectedFilter == 'LATE',
-                                color: Colors.deepOrange,
+                                color: VelocityColors.warning,
                                 onTap: () =>
                                     setState(() => _selectedFilter = 'LATE'),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _SummaryMetricChip(
                                 label: 'Early Exits',
                                 count: earlyRecords.length,
                                 isSelected: _selectedFilter == 'EARLY',
-                                color: Colors.purple,
+                                color: VelocityColors.purple,
                                 onTap: () =>
                                     setState(() => _selectedFilter = 'EARLY'),
                               ),
@@ -415,7 +436,7 @@ class _AdminAttendanceApprovalsScreenState
                 ),
 
                 const SliverToBoxAdapter(
-                  child: Divider(height: 1),
+                  child: Divider(height: 1, color: VelocityColors.border),
                 ),
 
                 if (filteredRecords.isEmpty)
@@ -428,15 +449,15 @@ class _AdminAttendanceApprovalsScreenState
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade50,
+                                color: VelocityColors.successBg,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.verified_outlined,
-                                size: 54,
-                                color: Colors.green.shade600,
+                                size: 48,
+                                color: VelocityColors.success,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -444,18 +465,19 @@ class _AdminAttendanceApprovalsScreenState
                               'All Clear & Caught Up!',
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
+                                color: VelocityColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               _selectedFilter == 'ALL'
                                   ? 'There are no pending attendance exceptions to review.'
                                   : 'No $_selectedFilter exceptions pending review.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Theme.of(context).hintColor,
-                                fontSize: 14,
+                              style: const TextStyle(
+                                color: VelocityColors.textSubtle,
+                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -467,7 +489,7 @@ class _AdminAttendanceApprovalsScreenState
                   SliverPadding(
                     padding: AppScaffold.getScrollPadding(
                       context,
-                      basePadding: const EdgeInsets.all(16),
+                      basePadding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -508,11 +530,13 @@ class _AdminAttendanceApprovalsScreenState
 
 class _TabButton extends StatelessWidget {
   final String title;
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _TabButton({
     required this.title,
+    required this.icon,
     required this.isSelected,
     required this.onTap,
   });
@@ -521,20 +545,38 @@ class _TabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+          color: isSelected ? VelocityColors.baseWhite : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: isSelected ? VelocityColors.cardShadow : null,
         ),
         alignment: Alignment.center,
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodySmall?.color,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? VelocityColors.primaryRed
+                  : VelocityColors.textSubtle,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected
+                    ? VelocityColors.primaryRed
+                    : VelocityColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -548,57 +590,110 @@ class _WfhApprovalsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(pendingWfhProvider);
     return RefreshIndicator(
+      color: VelocityColors.primaryRed,
       onRefresh: () async => ref.invalidate(pendingWfhProvider),
       child: asyncData.when(
         data: (requests) {
           if (requests.isEmpty) {
-            return const Center(child: Text('No pending WFH requests.'));
+            return const EmptyStateWidget(
+              title: 'No Pending WFH Requests',
+              message: 'All work-from-home applications have been processed.',
+              icon: Icons.home_work_outlined,
+            );
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
             itemCount: requests.length,
             itemBuilder: (context, index) {
               final req = requests[index];
-              return Card(
-                child: ListTile(
-                  title: Text('Employee: ${req['employeeId']?['name'] ?? 'Unknown'} | Date: ${req['dateStr']}'),
-                  subtitle: Text('Reason: ${req['reason']}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.check, color: Colors.green),
-                        onPressed: () async {
-                          try {
-                            await ref.read(attendanceServiceProvider).approveWfhRequest(req['_id'], 'Approved by Admin');
-                            ref.invalidate(pendingWfhProvider);
-                            if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Approved');
-                          } catch (e) {
-                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
-                          }
-                        },
+              final name = req['employeeId']?['name'] ?? 'Unknown Employee';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: VelocityColors.baseWhite,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: VelocityColors.border),
+                  boxShadow: VelocityColors.cardShadow,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: VelocityColors.infoBg,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () async {
-                           try {
-                            await ref.read(attendanceServiceProvider).rejectWfhRequest(req['_id'], 'Rejected by Admin');
-                            ref.invalidate(pendingWfhProvider);
-                            if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Rejected');
-                          } catch (e) {
-                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
-                          }
-                        },
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.home_work_outlined, color: VelocityColors.info, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: VelocityColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text('Date: ${req['dateStr']} • ${req['reason'] ?? "No reason specified"}', style: const TextStyle(fontSize: 12.5, color: VelocityColors.textSubtle)),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Approve WFH',
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: VelocityColors.successBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: VelocityColors.successBorder),
+                            ),
+                            child: const Icon(Icons.check, color: VelocityColors.success, size: 18),
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref.read(attendanceServiceProvider).approveWfhRequest(req['_id'], 'Approved by Admin');
+                              ref.invalidate(pendingWfhProvider);
+                              if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Approved');
+                            } catch (e) {
+                              if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                            }
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'Reject WFH',
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: VelocityColors.dangerBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: VelocityColors.dangerBorder),
+                            ),
+                            child: const Icon(Icons.close, color: VelocityColors.danger, size: 18),
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref.read(attendanceServiceProvider).rejectWfhRequest(req['_id'], 'Rejected by Admin');
+                              ref.invalidate(pendingWfhProvider);
+                              if (context.mounted) SnackbarUtils.showSuccess(context, 'WFH Rejected');
+                            } catch (e) {
+                              if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingStateWidget(),
+        error: (e, _) => ErrorStateWidget(error: e.toString(), onRetry: () => ref.invalidate(pendingWfhProvider)),
       ),
     );
   }
@@ -611,57 +706,110 @@ class _RegularizationApprovalsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(pendingRegularizationProvider);
     return RefreshIndicator(
+      color: VelocityColors.primaryRed,
       onRefresh: () async => ref.invalidate(pendingRegularizationProvider),
       child: asyncData.when(
         data: (requests) {
           if (requests.isEmpty) {
-            return const Center(child: Text('No pending regularization requests.'));
+            return const EmptyStateWidget(
+              title: 'No Pending Regularizations',
+              message: 'All regularization requests have been reviewed.',
+              icon: Icons.update_rounded,
+            );
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
             itemCount: requests.length,
             itemBuilder: (context, index) {
               final req = requests[index];
-              return Card(
-                child: ListTile(
-                  title: Text('Employee: ${req['employeeId']?['name'] ?? 'Unknown'} | Date: ${req['dateStr']} | Type: ${req['type']}'),
-                  subtitle: Text('Reason: ${req['reason']}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.check, color: Colors.green),
-                        onPressed: () async {
-                          try {
-                            await ref.read(attendanceServiceProvider).approveRegularizationRequest(req['_id'], 'Approved by Admin');
-                            ref.invalidate(pendingRegularizationProvider);
-                            if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Approved');
-                          } catch (e) {
-                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
-                          }
-                        },
+              final name = req['employeeId']?['name'] ?? 'Unknown Employee';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: VelocityColors.baseWhite,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: VelocityColors.border),
+                  boxShadow: VelocityColors.cardShadow,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: VelocityColors.purpleBg,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () async {
-                           try {
-                            await ref.read(attendanceServiceProvider).rejectRegularizationRequest(req['_id'], 'Rejected by Admin');
-                            ref.invalidate(pendingRegularizationProvider);
-                            if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Rejected');
-                          } catch (e) {
-                            if (context.mounted) SnackbarUtils.handleApiError(context, e);
-                          }
-                        },
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.update_rounded, color: VelocityColors.purple, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: VelocityColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text('Date: ${req['dateStr']} • ${req['type'] ?? "Regularization"} • ${req['reason'] ?? ""}', style: const TextStyle(fontSize: 12.5, color: VelocityColors.textSubtle)),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Approve Regularization',
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: VelocityColors.successBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: VelocityColors.successBorder),
+                            ),
+                            child: const Icon(Icons.check, color: VelocityColors.success, size: 18),
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref.read(attendanceServiceProvider).approveRegularizationRequest(req['_id'], 'Approved by Admin');
+                              ref.invalidate(pendingRegularizationProvider);
+                              if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Approved');
+                            } catch (e) {
+                              if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                            }
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'Reject Regularization',
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: VelocityColors.dangerBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: VelocityColors.dangerBorder),
+                            ),
+                            child: const Icon(Icons.close, color: VelocityColors.danger, size: 18),
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref.read(attendanceServiceProvider).rejectRegularizationRequest(req['_id'], 'Rejected by Admin');
+                              ref.invalidate(pendingRegularizationProvider);
+                              if (context.mounted) SnackbarUtils.showSuccess(context, 'Regularization Rejected');
+                            } catch (e) {
+                              if (context.mounted) SnackbarUtils.handleApiError(context, e);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const LoadingStateWidget(),
+        error: (e, _) => ErrorStateWidget(error: e.toString(), onRetry: () => ref.invalidate(pendingRegularizationProvider)),
       ),
     );
   }
@@ -712,18 +860,12 @@ class _ExceptionCard extends StatelessWidget {
     final outTimeFormatted = _formatTime(record.checkOutTime);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: VelocityColors.baseWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: VelocityColors.border),
+        boxShadow: VelocityColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -734,20 +876,25 @@ class _ExceptionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: VelocityColors.primaryRedLight,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: VelocityColors.primaryRedBorder),
+                  ),
+                  alignment: Alignment.center,
                   child: Text(
                     empName.isNotEmpty ? empName[0].toUpperCase() : 'E',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
                       fontSize: 16,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: VelocityColors.primaryRed,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -755,8 +902,9 @@ class _ExceptionCard extends StatelessWidget {
                       Text(
                         empName,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           fontSize: 15,
+                          color: VelocityColors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -764,9 +912,9 @@ class _ExceptionCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '$empDept ${empEmail.isNotEmpty ? "• $empEmail" : ""}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).hintColor,
+                          color: VelocityColors.textSubtle,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -777,20 +925,20 @@ class _ExceptionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 9,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: VelocityColors.warningBg,
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.orange.shade200),
+                    border: Border.all(color: VelocityColors.warningBorder),
                   ),
-                  child: Text(
+                  child: const Text(
                     'PENDING',
                     style: TextStyle(
-                      color: Colors.orange.shade800,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
+                      color: VelocityColors.warning,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10.5,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -812,7 +960,7 @@ class _ExceptionCard extends StatelessWidget {
                     label: record.lateMinutes != null && record.lateMinutes! > 0
                         ? 'LATE ARRIVAL (+${record.lateMinutes}m)'
                         : 'LATE ARRIVAL',
-                    color: Colors.deepOrange,
+                    color: VelocityColors.warning,
                   ),
                 if (isEarly)
                   _BadgePill(
@@ -821,29 +969,27 @@ class _ExceptionCard extends StatelessWidget {
                             record.earlyExitMinutes! > 0
                         ? 'EARLY CHECKOUT (-${record.earlyExitMinutes}m)'
                         : 'EARLY CHECKOUT',
-                    color: Colors.purple,
+                    color: VelocityColors.purple,
                   ),
                 _BadgePill(
-                  icon: Icons.calendar_today,
+                  icon: Icons.calendar_today_outlined,
                   label: record.dateStr,
-                  color: Colors.blueGrey,
+                  color: VelocityColors.textSecondary,
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Timing Metric Box
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16.0),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
-              ),
+              color: VelocityColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: VelocityColors.border),
             ),
             child: Row(
               children: [
@@ -852,19 +998,24 @@ class _ExceptionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: [
+                        children: const [
                           Icon(
-                            Icons.login,
+                            Icons.login_rounded,
                             size: 14,
-                            color: Colors.green.shade700,
+                            color: VelocityColors.success,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'CHECK IN',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).hintColor,
+                          SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'CHECK IN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: VelocityColors.textSubtle,
+                                letterSpacing: 0.4,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -873,38 +1024,44 @@ class _ExceptionCard extends StatelessWidget {
                       Text(
                         inTimeFormatted,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           fontSize: 14,
+                          color: VelocityColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  height: 32,
+                  height: 28,
                   width: 1,
-                  color: Theme.of(context).dividerColor,
+                  color: VelocityColors.divider,
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 12.0),
+                    padding: const EdgeInsets.only(left: 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: [
+                          children: const [
                             Icon(
-                              Icons.logout,
+                              Icons.logout_rounded,
                               size: 14,
-                              color: Colors.orange.shade700,
+                              color: VelocityColors.warning,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'CHECK OUT',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).hintColor,
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'CHECK OUT',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: VelocityColors.textSubtle,
+                                  letterSpacing: 0.4,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -913,8 +1070,9 @@ class _ExceptionCard extends StatelessWidget {
                         Text(
                           outTimeFormatted,
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                             fontSize: 14,
+                            color: VelocityColors.textPrimary,
                           ),
                         ),
                       ],
@@ -922,30 +1080,31 @@ class _ExceptionCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  height: 32,
+                  height: 28,
                   width: 1,
-                  color: Theme.of(context).dividerColor,
+                  color: VelocityColors.divider,
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 12.0),
+                    padding: const EdgeInsets.only(left: 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: [
+                          children: const [
                             Icon(
-                              Icons.timelapse,
+                              Icons.timelapse_rounded,
                               size: 14,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: VelocityColors.primaryRed,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'DURATION',
                               style: TextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).hintColor,
+                                fontWeight: FontWeight.w700,
+                                color: VelocityColors.textSubtle,
+                                letterSpacing: 0.4,
                               ),
                             ),
                           ],
@@ -957,8 +1116,9 @@ class _ExceptionCard extends StatelessWidget {
                                   ? '${record.workDurationMinutes}m'
                                   : '—'),
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                             fontSize: 14,
+                            color: VelocityColors.textPrimary,
                           ),
                         ),
                       ],
@@ -970,29 +1130,30 @@ class _ExceptionCard extends StatelessWidget {
           ),
 
           if (record.remarks != null && record.remarks!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
+                  color: VelocityColors.warningBg,
                   borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: VelocityColors.warningBorder),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.note_outlined,
-                      size: 16,
-                      color: Colors.amber.shade900,
+                    const Icon(
+                      Icons.note_alt_outlined,
+                      size: 15,
+                      color: VelocityColors.warning,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         record.remarks!,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.amber.shade900,
+                          color: VelocityColors.warning,
                         ),
                       ),
                     ),
@@ -1002,8 +1163,8 @@ class _ExceptionCard extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 16),
-          const Divider(height: 1),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: VelocityColors.divider),
 
           // Action Buttons
           Padding(
@@ -1014,17 +1175,20 @@ class _ExceptionCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onReject,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: VelocityColors.error,
-                      side: BorderSide(
-                        color: VelocityColors.error.withValues(alpha: 0.4),
+                      foregroundColor: VelocityColors.danger,
+                      side: const BorderSide(
+                        color: VelocityColors.dangerBorder,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.close, size: 18),
-                    label: const Text('Reject'),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text(
+                      'Reject',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1033,14 +1197,18 @@ class _ExceptionCard extends StatelessWidget {
                     onPressed: onApprove,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VelocityColors.success,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      foregroundColor: VelocityColors.baseWhite,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Approve'),
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text(
+                      'Approve',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                   ),
                 ),
               ],
@@ -1111,33 +1279,42 @@ class _SummaryMetricChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? color.withValues(alpha: 0.1) : VelocityColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? color : color.withValues(alpha: 0.2),
+            color: isSelected ? color : VelocityColors.border,
+            width: isSelected ? 1.5 : 1,
           ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: color.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
         ),
         child: Column(
           children: [
             Text(
               count.toString(),
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: isSelected ? Colors.white : color,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: isSelected ? color : VelocityColors.textPrimary,
+                height: 1.0,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Theme.of(context).hintColor,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? color : VelocityColors.textSubtle,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

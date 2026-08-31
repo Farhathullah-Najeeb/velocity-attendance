@@ -201,38 +201,48 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     const SizedBox(height: 16),
 
                     // Time Period Selector Tabs
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SegmentedButton<String>(
-                            segments: const [
-                              ButtonSegment(
-                                value: 'WEEKLY',
-                                label: Text('Weekly'),
-                                icon: Icon(Icons.view_week_outlined, size: 16),
-                              ),
-                              ButtonSegment(
-                                value: 'MONTHLY',
-                                label: Text('Monthly'),
-                                icon: Icon(Icons.calendar_month_outlined, size: 16),
-                              ),
-                              ButtonSegment(
-                                value: 'CUSTOM',
-                                label: Text('Custom'),
-                                icon: Icon(Icons.date_range_outlined, size: 16),
-                              ),
-                            ],
-                            selected: {_selectedReportType},
-                            onSelectionChanged: (set) {
-                              final val = set.first;
-                              setState(() => _selectedReportType = val);
-                              if (val == 'CUSTOM' && _startDate == null) {
-                                _pickDateRange();
-                              }
-                            },
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: VelocityColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: VelocityColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _PeriodTab(
+                              title: 'Weekly',
+                              icon: Icons.view_week_outlined,
+                              isSelected: _selectedReportType == 'WEEKLY',
+                              onTap: () =>
+                                  setState(() => _selectedReportType = 'WEEKLY'),
+                            ),
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: _PeriodTab(
+                              title: 'Monthly',
+                              icon: Icons.calendar_month_outlined,
+                              isSelected: _selectedReportType == 'MONTHLY',
+                              onTap: () =>
+                                  setState(() => _selectedReportType = 'MONTHLY'),
+                            ),
+                          ),
+                          Expanded(
+                            child: _PeriodTab(
+                              title: 'Custom',
+                              icon: Icons.date_range_outlined,
+                              isSelected: _selectedReportType == 'CUSTOM',
+                              onTap: () {
+                                setState(() => _selectedReportType = 'CUSTOM');
+                                if (_startDate == null) {
+                                  _pickDateRange();
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
                     if (_selectedReportType == 'CUSTOM') ...[
@@ -242,23 +252,22 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 14,
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Theme.of(context).dividerColor,
-                            ),
+                            color: VelocityColors.surfaceAlt,
+                            border: Border.all(color: VelocityColors.border),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.calendar_today_outlined,
                                 size: 16,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: VelocityColors.primaryRed,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   _startDate != null && _endDate != null
@@ -267,10 +276,15 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
+                                    color: VelocityColors.textPrimary,
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.edit, size: 16),
+                              const Icon(
+                                Icons.edit,
+                                size: 16,
+                                color: VelocityColors.textSubtle,
+                              ),
                             ],
                           ),
                         ),
@@ -283,48 +297,75 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Search employee name / ID...',
-                              prefixIcon: const Icon(Icons.search, size: 20),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: VelocityColors.baseWhite,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: VelocityColors.border),
                             ),
-                            onChanged: (v) => setState(() => _searchQuery = v),
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                hintText: 'Search employee name / ID...',
+                                hintStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: VelocityColors.textMuted,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  size: 18,
+                                  color: VelocityColors.textSubtle,
+                                ),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                              onChanged: (v) => setState(() => _searchQuery = v),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: VelocityColors.primaryRed,
+                            foregroundColor: VelocityColors.baseWhite,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: _isExporting ? null : () => _exportReport('PDF'),
+                          icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                          label: const Text(
+                            'PDF',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                          ),
-                          onPressed: _isExporting ? null : () => _exportReport('PDF'),
-                          icon: const Icon(Icons.picture_as_pdf, size: 16),
-                          label: const Text('PDF'),
-                        ),
-                        const SizedBox(width: 6),
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
+                            foregroundColor: VelocityColors.textPrimary,
+                            side: const BorderSide(color: VelocityColors.border),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           onPressed: _isExporting ? null : () => _exportReport('EXCEL'),
                           icon: const Icon(Icons.table_chart_outlined, size: 16),
-                          label: const Text('Excel'),
+                          label: const Text(
+                            'Excel',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
@@ -701,6 +742,61 @@ class _EmployeeWorkHoursCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PeriodTab extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PeriodTab({
+    required this.title,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? VelocityColors.baseWhite : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isSelected ? VelocityColors.cardShadow : null,
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected
+                  ? VelocityColors.primaryRed
+                  : VelocityColors.textSubtle,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected
+                    ? VelocityColors.primaryRed
+                    : VelocityColors.textSecondary,
               ),
             ),
           ],

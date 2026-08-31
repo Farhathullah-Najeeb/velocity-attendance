@@ -35,7 +35,7 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           Expanded(
             child: ResponsiveContainer(
-              maxWidth: 800,
+              maxWidth: 1000,
               child: RefreshIndicator(
                 onRefresh: () => ref.read(notificationProvider.notifier).fetchNotifications(),
                 child: _buildBody(context, state, ref),

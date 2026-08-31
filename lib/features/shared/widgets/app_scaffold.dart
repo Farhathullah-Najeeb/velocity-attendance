@@ -40,7 +40,7 @@ class AppScaffold extends StatelessWidget {
     final bg = backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
 
     Widget content = ResponsiveContainer(
-      maxWidth: 1024,
+      maxWidth: 1200, // Expanded for desktop web polish
       child: body,
     );
 
@@ -54,7 +54,12 @@ class AppScaffold extends StatelessWidget {
           Positioned(
             bottom: fabBottom,
             right: 16,
-            child: floatingActionButton!,
+            child: isDesktop 
+                ? MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: floatingActionButton!,
+                  )
+                : floatingActionButton!,
           ),
         ],
       );

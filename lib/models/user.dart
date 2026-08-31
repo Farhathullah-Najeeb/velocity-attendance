@@ -1,5 +1,6 @@
 class User {
   final String id;
+  final String? employeeId;
   final String name;
   final String email;
   final String role; // 'EMPLOYEE' | 'ADMIN' | 'SUPER_ADMIN'
@@ -17,6 +18,7 @@ class User {
 
   User({
     required this.id,
+    this.employeeId,
     required this.name,
     required this.email,
     required this.role,
@@ -36,6 +38,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['_id'] as String? ?? '',
+      employeeId: json['employeeId'] as String?,
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? 'EMPLOYEE',
@@ -56,6 +59,7 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
+      if (employeeId != null) 'employeeId': employeeId,
       'name': name,
       'email': email,
       'role': role,
