@@ -15,34 +15,36 @@ class NotificationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(notificationProvider);
 
-    return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        children: [
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.router.maybePop(),
+        ),
+        actions: [
           if (state.notifications.isNotEmpty && state.unreadCount > 0)
             Padding(
-              padding: const EdgeInsets.only(right: 8, top: 4),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () {
-                    ref.read(notificationProvider.notifier).markAllAsRead();
-                  },
-                  icon: Icon(Icons.done_all, color: Theme.of(context).colorScheme.primary),
-                  label: Text('Mark all read', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+              padding: const EdgeInsets.only(right: 8),
+              child: TextButton.icon(
+                onPressed: () {
+                  ref.read(notificationProvider.notifier).markAllAsRead();
+                },
+                icon: Icon(Icons.done_all, color: Theme.of(context).colorScheme.primary),
+                label: Text(
+                  'Mark all read',
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
                 ),
               ),
             ),
-          Expanded(
-            child: ResponsiveContainer(
-              maxWidth: 1000,
-              child: RefreshIndicator(
-                onRefresh: () => ref.read(notificationProvider.notifier).fetchNotifications(),
-                child: _buildBody(context, state, ref),
-              ),
-            ),
-          ),
         ],
+      ),
+      body: ResponsiveContainer(
+        maxWidth: 1000,
+        child: RefreshIndicator(
+          onRefresh: () => ref.read(notificationProvider.notifier).fetchNotifications(),
+          child: _buildBody(context, state, ref),
+        ),
       ),
     );
   }
