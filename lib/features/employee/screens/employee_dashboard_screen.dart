@@ -184,7 +184,77 @@ class _EmployeeDashboardScreenState
     }
   }
 
+  Future<String?> _showWorkSummaryDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.assignment_outlined, color: Color(0xFF4F46E5)),
+              SizedBox(width: 8),
+              Text('Work Update Form', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please summarize your work completed during this shift before checking out:',
+                style: TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Enter your daily work summary here...',
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF4F46E5), width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isEmpty) {
+                  SnackbarUtils.showError(context, 'Work summary is required.');
+                  return;
+                }
+                Navigator.of(context).pop(text);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4F46E5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Submit & Check-Out', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _handleCheckOut() async {
+    final user = ref.read(authProvider).user;
+    String? workSummary;
+    if (user?.requiresWorkUpdate == true || _isWfh) {
+      workSummary = await _showWorkSummaryDialog();
+      if (workSummary == null) return; // User cancelled
+    }
+
     setState(() => _isLoading = true);
     try {
       final position = await _determinePosition();
@@ -193,9 +263,8 @@ class _EmployeeDashboardScreenState
 
       await ref
           .read(attendanceServiceProvider)
-          .checkOut(lat, lng, _locationLabel ?? "Current Location");
+          .checkOut(lat, lng, _locationLabel ?? "Current Location", _isWfh, workSummary);
 
-      final user = ref.read(authProvider).user;
       if (user != null) {
         ref.invalidate(todayAttendanceProvider(user.id));
       }

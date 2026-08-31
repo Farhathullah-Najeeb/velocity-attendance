@@ -12,6 +12,7 @@ class User {
   final String? officeEndTime;
   final bool? isActive;
   final bool? isApproved;
+  final bool? requiresWorkUpdate;
   final List<String>? permissions;
   final String? createdAt;
   final String? updatedAt;
@@ -30,6 +31,7 @@ class User {
     this.officeEndTime,
     this.isActive,
     this.isApproved,
+    this.requiresWorkUpdate,
     this.permissions,
     this.createdAt,
     this.updatedAt,
@@ -50,6 +52,7 @@ class User {
       officeEndTime: json['officeEndTime'] as String?,
       isActive: json['isActive'] as bool?,
       isApproved: json['isApproved'] as bool?,
+      requiresWorkUpdate: json['requiresWorkUpdate'] as bool?,
       permissions: (json['permissions'] as List<dynamic>?)?.map((e) => e as String).toList(),
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,
@@ -71,6 +74,7 @@ class User {
       'officeEndTime': officeEndTime,
       'isActive': isActive,
       'isApproved': isApproved,
+      'requiresWorkUpdate': requiresWorkUpdate,
       'permissions': permissions,
       'createdAt': createdAt,
       'updatedAt': updatedAt,

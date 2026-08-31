@@ -17,6 +17,7 @@ class Attendance {
   final String approvalStatus; // 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED'
   final String? remarks;
   final String? penaltyType;
+  final String? workSummary;
 
   Attendance({
     required this.id,
@@ -37,6 +38,7 @@ class Attendance {
     required this.approvalStatus,
     this.remarks,
     this.penaltyType,
+    this.workSummary,
   });
 
   factory Attendance.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class Attendance {
       approvalStatus: json['approvalStatus'] as String? ?? 'NOT_REQUIRED',
       remarks: json['remarks'] as String?,
       penaltyType: json['penaltyType'] as String?,
+      workSummary: json['workSummary'] as String?,
     );
   }
 }

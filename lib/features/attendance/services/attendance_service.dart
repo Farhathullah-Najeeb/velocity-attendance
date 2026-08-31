@@ -8,21 +8,23 @@ class AttendanceService {
 
   AttendanceService(this._dio);
 
-  Future<void> checkIn(double lat, double lng, [String? address, bool isWfh = false]) async {
+  Future<void> checkIn(double lat, double lng, [String? address, bool isWfh = false, String? reason]) async {
     await _dio.post('/attendance/check-in', data: {
       'latitude': lat,
       'longitude': lng,
-      'address': address,
+      'address': ?address,
       'isWFH': isWfh,
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
     });
   }
 
-  Future<void> checkOut(double lat, double lng, [String? address, bool isWfh = false]) async {
+  Future<void> checkOut(double lat, double lng, [String? address, bool isWfh = false, String? workSummary]) async {
     await _dio.post('/attendance/check-out', data: {
       'latitude': lat,
       'longitude': lng,
-      'address': address,
+      'address': ?address,
       'isWFH': isWfh,
+      if (workSummary != null && workSummary.isNotEmpty) 'workSummary': workSummary,
     });
   }
 

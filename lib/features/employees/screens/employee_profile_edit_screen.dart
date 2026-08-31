@@ -36,6 +36,7 @@ class _EmployeeProfileEditScreenState
   late TextEditingController _locationController;
 
   late bool _isActive;
+  late bool _requiresWorkUpdate;
   String? _selectedRoleId;
   String? _selectedSiteId;
   String? _staffType;
@@ -52,6 +53,7 @@ class _EmployeeProfileEditScreenState
     _locationController =
         TextEditingController(text: widget.employee.location);
     _isActive = widget.employee.isActive ?? true;
+    _requiresWorkUpdate = widget.employee.requiresWorkUpdate ?? false;
     _selectedSiteId = widget.employee.assignedSite;
     _staffType = widget.employee.staffType ?? 'OFFICE';
     if (widget.employee.officeStartTime != null) {
@@ -138,6 +140,7 @@ class _EmployeeProfileEditScreenState
           'department': _departmentController.text.trim(),
           'location': _locationController.text.trim(),
           'staffType': _staffType,
+          'requiresWorkUpdate': _requiresWorkUpdate,
           if (_officeStartTime != null)
             'officeStartTime': '${_officeStartTime!.hour.toString().padLeft(2, '0')}:${_officeStartTime!.minute.toString().padLeft(2, '0')}',
           if (_officeEndTime != null)
@@ -296,6 +299,53 @@ class _EmployeeProfileEditScreenState
                               value: _isActive,
                               activeThumbColor: VelocityColors.success,
                               onChanged: (val) => _toggleStatus(val),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Work Update Enforcement Toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Mandatory Work Update Form',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _requiresWorkUpdate
+                                        ? 'Employee must fill work summary on check-out'
+                                        : 'Optional work summary on check-out',
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _requiresWorkUpdate,
+                              onChanged: (val) {
+                                setState(() => _requiresWorkUpdate = val);
+                              },
                             ),
                           ],
                         ),
