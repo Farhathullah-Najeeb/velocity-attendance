@@ -548,7 +548,7 @@ class _TabButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 9),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected ? VelocityColors.baseWhite : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
@@ -557,23 +557,28 @@ class _TabButton extends StatelessWidget {
         alignment: Alignment.center,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 14,
               color: isSelected
                   ? VelocityColors.primaryRed
                   : VelocityColors.textSubtle,
             ),
-            const SizedBox(width: 6),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected
-                    ? VelocityColors.primaryRed
-                    : VelocityColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 13,
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: isSelected
+                      ? VelocityColors.primaryRed
+                      : VelocityColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -985,7 +990,7 @@ class _ExceptionCard extends StatelessWidget {
           // Timing Metric Box
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16.0),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: VelocityColors.surfaceAlt,
               borderRadius: BorderRadius.circular(8),
@@ -994,52 +999,57 @@ class _ExceptionCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.login_rounded,
-                            size: 14,
-                            color: VelocityColors.success,
-                          ),
-                          SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              'CHECK IN',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: VelocityColors.textSubtle,
-                                letterSpacing: 0.4,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.login_rounded,
+                              size: 13,
+                              color: VelocityColors.success,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        inTimeFormatted,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: VelocityColors.textPrimary,
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'CHECK IN',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: VelocityColors.textSubtle,
+                                  letterSpacing: 0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          inTimeFormatted,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: VelocityColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Container(
-                  height: 28,
+                  height: 24,
                   width: 1,
                   color: VelocityColors.divider,
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 14.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1047,7 +1057,7 @@ class _ExceptionCard extends StatelessWidget {
                           children: const [
                             Icon(
                               Icons.logout_rounded,
-                              size: 14,
+                              size: 13,
                               color: VelocityColors.warning,
                             ),
                             SizedBox(width: 4),
@@ -1055,10 +1065,10 @@ class _ExceptionCard extends StatelessWidget {
                               child: Text(
                                 'CHECK OUT',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                   color: VelocityColors.textSubtle,
-                                  letterSpacing: 0.4,
+                                  letterSpacing: 0.3,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -1071,22 +1081,24 @@ class _ExceptionCard extends StatelessWidget {
                           outTimeFormatted,
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontSize: 13,
                             color: VelocityColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                 ),
                 Container(
-                  height: 28,
+                  height: 24,
                   width: 1,
                   color: VelocityColors.divider,
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 14.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1094,17 +1106,21 @@ class _ExceptionCard extends StatelessWidget {
                           children: const [
                             Icon(
                               Icons.timelapse_rounded,
-                              size: 14,
+                              size: 13,
                               color: VelocityColors.primaryRed,
                             ),
                             SizedBox(width: 4),
-                            Text(
-                              'DURATION',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: VelocityColors.textSubtle,
-                                letterSpacing: 0.4,
+                            Flexible(
+                              child: Text(
+                                'DURATION',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: VelocityColors.textSubtle,
+                                  letterSpacing: 0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -1117,9 +1133,11 @@ class _ExceptionCard extends StatelessWidget {
                                   : '—'),
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontSize: 13,
                             color: VelocityColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

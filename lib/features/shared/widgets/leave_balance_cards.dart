@@ -117,11 +117,12 @@ class LeaveBalanceCards extends StatelessWidget {
     // Mobile / Tablet layout
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.zero,
+      clipBehavior: Clip.none,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
         children: [
           _LeaveMiniCard(
-            width: 170,
+            width: 155,
             title: 'CASUAL LEAVE',
             icon: Icons.beach_access_rounded,
             gradient: const LinearGradient(
@@ -137,7 +138,7 @@ class LeaveBalanceCards extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _LeaveMiniCard(
-            width: 175,
+            width: 155,
             title: 'SICK LEAVE',
             icon: Icons.medical_services_outlined,
             gradient: const LinearGradient(
@@ -153,7 +154,7 @@ class LeaveBalanceCards extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _LeaveMiniCard(
-            width: 175,
+            width: 155,
             title: 'COMP OFFS',
             icon: Icons.card_giftcard_rounded,
             gradient: const LinearGradient(
@@ -169,7 +170,7 @@ class LeaveBalanceCards extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _LeaveMiniCard(
-            width: 175,
+            width: 155,
             title: 'THIS MONTH',
             icon: Icons.calendar_month_rounded,
             gradient: const LinearGradient(

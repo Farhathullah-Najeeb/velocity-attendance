@@ -270,7 +270,12 @@ class _EmployeeDashboardScreenState
           ref.invalidate(upcomingHolidaysListProvider);
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
+          padding: EdgeInsets.fromLTRB(
+            isDesktop ? 28 : 16,
+            20,
+            isDesktop ? 28 : 16,
+            120,
+          ),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,7 +286,7 @@ class _EmployeeDashboardScreenState
                 attendanceAsync.asData?.value,
                 isDesktop,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // 2. Main Dashboard Grid / Stack
               if (isDesktop)
@@ -304,10 +309,11 @@ class _EmployeeDashboardScreenState
                           _buildLeaveBalances(
                             employeeId,
                             reportAsync.asData?.value,
+                            isDesktop,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           _buildQuickActionsHub(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
                           _buildUpcomingHolidaysBulletin(),
                         ],
                       ),
@@ -319,11 +325,15 @@ class _EmployeeDashboardScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildAttendanceConsole(attendanceAsync.asData?.value),
-                    const SizedBox(height: 24),
-                    _buildLeaveBalances(employeeId, reportAsync.asData?.value),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+                    _buildLeaveBalances(
+                      employeeId,
+                      reportAsync.asData?.value,
+                      isDesktop,
+                    ),
+                    const SizedBox(height: 20),
                     _buildQuickActionsHub(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildUpcomingHolidaysBulletin(),
                   ],
                 ),
@@ -732,6 +742,7 @@ class _EmployeeDashboardScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
@@ -741,13 +752,13 @@ class _EmployeeDashboardScreenState
                     ),
                     child: const Icon(
                       Icons.access_time_rounded,
-                      size: 16,
+                      size: 15,
                       color: VelocityColors.primaryRed,
                     ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'ATTENDANCE CONSOLE',
+                    'ATTENDANCE',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -759,15 +770,15 @@ class _EmployeeDashboardScreenState
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 5,
+                  horizontal: 10,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.3),
-                    width: 1.5,
+                    width: 1.2,
                   ),
                 ),
                 child: Row(
@@ -783,7 +794,7 @@ class _EmployeeDashboardScreenState
                         boxShadow: [
                           BoxShadow(
                             color: statusColor.withValues(alpha: 0.5),
-                            blurRadius: 8,
+                            blurRadius: 6,
                           ),
                         ],
                       ),
@@ -805,64 +816,116 @@ class _EmployeeDashboardScreenState
           ),
           const SizedBox(height: 28),
 
-          // Clock Icon with gradient
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFF1F0), Color(0xFFFFE4E3)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE53935).withValues(alpha: 0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.access_time_filled,
-              color: VelocityColors.primaryRed,
-              size: 28,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Big Digital Clock
+          // Obsidian Digital Clock Box
           StreamBuilder<DateTime>(
             stream: _timeStream,
             builder: (context, snapshot) {
               final t = snapshot.data ?? DateTime.now();
-              return Column(
-                children: [
-                  Text(
-                    DateFormat('hh:mm:ss').format(t),
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                      letterSpacing: -0.5,
-                      shadows: [Shadow(color: Colors.black, blurRadius: 8)],
-                    ),
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    DateFormat('a').format(t),
-                    style: const TextStyle(
-                      color: VelocityColors.textMuted,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF334155), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: isCheckedIn
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFE53935),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isCheckedIn
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFE53935))
+                                    .withValues(alpha: 0.6),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('EEEE, d MMM yyyy')
+                              .format(DateTime.now())
+                              .toUpperCase(),
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          DateFormat('hh:mm:ss').format(t),
+                          style: const TextStyle(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 1.0,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFFE53935).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xFFE53935)
+                                  .withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            DateFormat('a').format(t),
+                            style: const TextStyle(
+                              color: Color(0xFFFCA5A5),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           // Location Card
           Container(
@@ -986,7 +1049,7 @@ class _EmployeeDashboardScreenState
           if (isCheckedOut)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [const Color(0xFFF0FDF4), const Color(0xFFE8F5E9)],
@@ -1002,15 +1065,19 @@ class _EmployeeDashboardScreenState
                   Icon(
                     Icons.check_circle_rounded,
                     color: Color(0xFF16A34A),
-                    size: 20,
+                    size: 18,
                   ),
-                  SizedBox(width: 10),
-                  Text(
-                    "Today's Session Completed Successfully ✓",
-                    style: TextStyle(
-                      color: Color(0xFF16A34A),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      "Shift Completed Successfully ✓",
+                      style: TextStyle(
+                        color: Color(0xFF16A34A),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1254,7 +1321,7 @@ class _EmployeeDashboardScreenState
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
@@ -1284,14 +1351,18 @@ class _EmployeeDashboardScreenState
   // ===========================================================================
   // 3. LEAVE BALANCES (4 CARDS)
   // ===========================================================================
-  Widget _buildLeaveBalances(String employeeId, Map<String, dynamic>? report) {
+  Widget _buildLeaveBalances(
+    String employeeId,
+    Map<String, dynamic>? report,
+    bool isDesktop,
+  ) {
     final balanceAsync = ref.watch(employeeLeaveBalanceProvider(employeeId));
     final daysLogged = report?['daysPresent'] as int? ?? 3;
 
     return balanceAsync.when(
       data: (balance) => LeaveBalanceCards(
         balance: balance,
-        forceDesktop: true,
+        forceDesktop: isDesktop,
         daysLoggedThisMonth: daysLogged,
       ),
       loading: () => Container(

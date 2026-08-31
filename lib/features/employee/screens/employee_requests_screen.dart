@@ -33,7 +33,7 @@ class _EmployeeRequestsScreenState
             isDesktop ? 24 : 16,
             isDesktop ? 20 : 16,
             isDesktop ? 24 : 16,
-            40,
+            120,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,11 +144,17 @@ class _EmployeeRequestsScreenState
                       onTap: () => setState(() => _selectedTabIndex = 0),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 9,
+                          horizontal: 8,
+                        ),
                         decoration: BoxDecoration(
                           gradient: _selectedTabIndex == 0
                               ? const LinearGradient(
-                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  colors: [
+                                    Color(0xFFE53935),
+                                    Color(0xFFC62828),
+                                  ],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 )
@@ -157,27 +163,42 @@ class _EmployeeRequestsScreenState
                               ? null
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTabIndex == 0
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFE53935)
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
                         ),
                         alignment: Alignment.center,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.home_work_rounded,
-                              size: 16,
+                              size: 15,
                               color: _selectedTabIndex == 0
                                   ? Colors.white
                                   : const Color(0xFF64748B),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Work From Home (WFH)',
-                              style: TextStyle(
-                                color: _selectedTabIndex == 0
-                                    ? Colors.white
-                                    : const Color(0xFF64748B),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                isDesktop ? 'Work From Home (WFH)' : 'WFH',
+                                style: TextStyle(
+                                  color: _selectedTabIndex == 0
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -190,11 +211,17 @@ class _EmployeeRequestsScreenState
                       onTap: () => setState(() => _selectedTabIndex = 1),
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 9,
+                          horizontal: 8,
+                        ),
                         decoration: BoxDecoration(
                           gradient: _selectedTabIndex == 1
                               ? const LinearGradient(
-                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                  colors: [
+                                    Color(0xFFE53935),
+                                    Color(0xFFC62828),
+                                  ],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 )
@@ -203,27 +230,42 @@ class _EmployeeRequestsScreenState
                               ? null
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTabIndex == 1
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFE53935)
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
                         ),
                         alignment: Alignment.center,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.update_rounded,
-                              size: 16,
+                              size: 15,
                               color: _selectedTabIndex == 1
                                   ? Colors.white
                                   : const Color(0xFF64748B),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Regularization',
-                              style: TextStyle(
-                                color: _selectedTabIndex == 1
-                                    ? Colors.white
-                                    : const Color(0xFF64748B),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Regularization',
+                                style: TextStyle(
+                                  color: _selectedTabIndex == 1
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -234,7 +276,7 @@ class _EmployeeRequestsScreenState
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
               _selectedTabIndex == 0
                   ? const _WfhRequestsView()
@@ -364,29 +406,35 @@ class _WfhRequestsViewState extends ConsumerState<_WfhRequestsView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'WFH Applications',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+            const Expanded(
+              child: Text(
+                'WFH Applications',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: VelocityColors.primaryRed,
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 0,
               ),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text(
-                'New WFH Request',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: Text(
+                isDesktop ? 'New WFH Request' : '+ Request',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
               ),
               onPressed: _showNewRequestModal,
             ),
@@ -771,29 +819,35 @@ class _RegularizationRequestsViewState
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Regularization Applications',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+            const Expanded(
+              child: Text(
+                'Regularization Applications',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: VelocityColors.primaryRed,
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 0,
               ),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text(
-                'New Regularization',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: Text(
+                isDesktop ? 'New Regularization' : '+ Request',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
               ),
               onPressed: _showNewRequestModal,
             ),

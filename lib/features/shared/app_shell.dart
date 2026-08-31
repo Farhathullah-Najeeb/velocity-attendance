@@ -215,33 +215,33 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
 
     final List<NavigationDestination> employeeDestinations = [
       const NavigationDestination(
-        icon: Icon(Icons.dashboard_outlined),
-        selectedIcon: Icon(Icons.dashboard_rounded),
+        icon: Icon(Icons.grid_view_outlined),
+        selectedIcon: Icon(Icons.grid_view_rounded),
         label: 'Dashboard',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.event_note_outlined),
-        selectedIcon: Icon(Icons.event_note_rounded),
+        icon: Icon(Icons.event_available_outlined),
+        selectedIcon: Icon(Icons.event_available_rounded),
         label: 'Leaves',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.history_outlined),
+        icon: Icon(Icons.history_toggle_off_rounded),
         selectedIcon: Icon(Icons.history_rounded),
         label: 'History',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.mark_email_unread_outlined),
-        selectedIcon: Icon(Icons.mark_email_unread_rounded),
+        icon: Icon(Icons.assignment_turned_in_outlined),
+        selectedIcon: Icon(Icons.assignment_turned_in_rounded),
         label: 'Requests',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.timer_outlined),
-        selectedIcon: Icon(Icons.timer_rounded),
+        icon: Icon(Icons.more_time_rounded),
+        selectedIcon: Icon(Icons.more_time_rounded),
         label: 'Overtime',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.person_outline),
-        selectedIcon: Icon(Icons.person_rounded),
+        icon: Icon(Icons.badge_outlined),
+        selectedIcon: Icon(Icons.badge_rounded),
         label: 'My Profile',
       ),
     ];
@@ -253,13 +253,13 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         label: 'Dashboard',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.description_outlined),
-        selectedIcon: Icon(Icons.description_rounded),
+        icon: Icon(Icons.assignment_outlined),
+        selectedIcon: Icon(Icons.assignment_rounded),
         label: 'Requests',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.people_outline),
-        selectedIcon: Icon(Icons.people_rounded),
+        icon: Icon(Icons.badge_outlined),
+        selectedIcon: Icon(Icons.badge_rounded),
         label: 'Employees',
       ),
       const NavigationDestination(
@@ -268,13 +268,13 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         label: 'Leave Requests',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.warning_amber_outlined),
-        selectedIcon: Icon(Icons.warning_amber_rounded),
+        icon: Icon(Icons.gpp_maybe_outlined),
+        selectedIcon: Icon(Icons.gpp_maybe_rounded),
         label: 'Exceptions',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.settings_outlined),
-        selectedIcon: Icon(Icons.settings_rounded),
+        icon: Icon(Icons.tune_rounded),
+        selectedIcon: Icon(Icons.tune_rounded),
         label: 'Holidays & Settings',
       ),
       const NavigationDestination(
@@ -283,8 +283,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         label: 'Reports',
       ),
       const NavigationDestination(
-        icon: Icon(Icons.person_outline),
-        selectedIcon: Icon(Icons.person_rounded),
+        icon: Icon(Icons.admin_panel_settings_outlined),
+        selectedIcon: Icon(Icons.admin_panel_settings_rounded),
         label: 'My Profile',
       ),
     ];
