@@ -255,8 +255,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                       child: Column(
                         children: [
                           const Padding(
-                            padding: EdgeInsets.only(top: 32.0, bottom: 24.0),
-                            child: VelocityLogo(height: 28),
+                            padding: EdgeInsets.only(top: 48.0, bottom: 24.0),
+                            child: VelocityLogo(height: 40),
                           ),
                           // User Profile Badge in Sidebar
                           Container(
@@ -420,7 +420,12 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                         ],
                       ),
                     ),
-                    Expanded(child: child),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 32.0),
+                        child: child,
+                      ),
+                    ),
                   ],
                 ),
               );
